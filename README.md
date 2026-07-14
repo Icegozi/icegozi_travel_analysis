@@ -1,129 +1,50 @@
-# TIỂU LUẬN PHÂN TÍCH DỮ LIỆU DU LỊCH VIỆT NAM
-
-## Nhóm thực hiện
-
-- Hà Xuân Phúc
-- Lại Thị Mai
-- Hoàng Quốc Cường
-- Đỗ Thị Thanh Huyền
+# PHÂN TÍCH DỮ LIỆU DU LỊCH VIỆT NAM TỪ HTML CÔNG KHAI
 
 ## Mục tiêu
 
-Phân tích mức độ quan tâm trực tuyến đối với các điểm đến du lịch Việt Nam theo
-tháng, mùa và chủ đề du lịch. Kết quả được dùng để nhận diện điểm đến nổi bật theo
-mùa, loại hình nội dung được quan tâm và gợi ý định hướng truyền thông.
+Thu thập và phân tích nội dung HTML công khai từ VNTRIP và Vietnam.travel để nhận
+diện điểm đến, chủ đề, mùa vụ và mức độ quan tâm trực tuyến. Lượt xem bài viết là
+chỉ số quan tâm nội dung, không thay thế thống kê lượng khách du lịch thực tế.
 
-> Lượt xem bài viết là chỉ số quan tâm trực tuyến; không thay thế số lượt khách du
-> lịch thực tế.
+Crawler chỉ lấy trang công khai khi `robots.txt` cho phép, không đăng nhập, không
+vượt CAPTCHA và không thu thập dữ liệu cá nhân.
 
-## Nguồn dữ liệu
+## Mục đích thực tiễn
 
-| Nguồn | Dữ liệu thu thập | Vai trò |
+Sản phẩm là công cụ theo dõi **nhu cầu nội dung du lịch trực tuyến**, giúp đội ngũ
+marketing và kinh doanh chọn điểm đến, chủ đề và thời điểm ưu tiên. Sản phẩm không
+dự báo trực tiếp số khách du lịch hoặc doanh thu.
+
+| Người dùng | Câu hỏi cần trả lời | Kết quả sử dụng |
 |---|---|---|
-| VNTRIP | Bài viết, ngày đăng, lượt xem, mô tả, nội dung | Đo mức quan tâm theo lượt xem/ngày |
-| Vietnam.travel | Bài viết và trang điểm đến công khai | Mở rộng danh mục điểm đến và chủ đề |
+| Công ty lữ hành/OTA | Nên quảng bá tour hay điểm đến nào theo mùa? | Xếp hạng điểm cơ hội, lượt xem/ngày và xu hướng mùa vụ. |
+| Khách sạn, resort | Khi nào nên chạy gói khuyến mãi hoặc hợp tác nội dung? | Theo dõi điểm đến có mức quan tâm và tốc độ tăng lượt xem cao. |
+| Đội content/SEO | Nên viết chủ đề nào tiếp theo? | Nhận diện địa danh/chủ đề đang được quan tâm và nội dung cần mở rộng. |
+| Cơ quan xúc tiến du lịch | Điểm đến nào cần ưu tiên truyền thông? | So sánh mức độ hiện diện và quan tâm trực tuyến giữa các điểm đến. |
 
-Mỗi crawler chỉ lấy HTML công khai khi `robots.txt` cho phép, không đăng nhập,
-không vượt CAPTCHA và không thu thập dữ liệu cá nhân.
+Ví dụ: một điểm đến có lượt xem/ngày và số bài viết cao là tín hiệu để ưu tiên landing
+page, bài SEO, quảng cáo hoặc gói sản phẩm theo mùa. Ngược lại, điểm đến có ít dữ
+liệu cần được bổ sung nội dung và theo dõi thêm trước khi đầu tư ngân sách.
 
-## Cấu trúc source code
+## Cấu trúc
 
 ```text
-VNTRIP/
-├── Export_Raw_Data.ipynb       # Crawl và xuất dữ liệu thô VNTRIP
-├── Predict.ipynb               # Làm sạch, EDA và mô hình lượt xem
-└── crawl_vntrip.py             # Crawler VNTRIP
-
-VIETNAM_TRAVEL/
-├── Export_Raw_Data.ipynb       # Crawl và xuất dữ liệu thô Vietnam.travel
-└── crawl_vietnam_travel.py     # Crawler Vietnam.travel
-
-KHAO_SAT/
-└── PhanTich_KhaoSat.ipynb      # Phân tích rating, đánh giá và ý định quay lại
+VNTRIP/crawl_vntrip.py                  # Crawl bài viết và snapshot lượt xem
+VIETNAM_TRAVEL/crawl_vietnam_travel.py  # Crawl bài viết/điểm đến
+analysis_pipeline.py                    # Làm sạch, gán nhãn, khử trùng, phân tích
+dashboard.py                            # Sinh dashboard HTML tĩnh
+run_all.sh                              # Crawl và phân tích toàn bộ
+run_snapshot.sh                         # Cập nhật snapshot VNTRIP
 
 data/
-├── VNTRIP/
-│   ├── rawdata.csv             # Bài viết VNTRIP đã parse
-│   ├── links_vntrip.csv        # URL bài viết
-│   ├── article_snapshots.csv   # Lịch sử lượt xem theo ngày
-│   ├── monthly_article_stats.csv
-│   └── dataset.csv             # Dữ liệu đã làm sạch cho mô hình
-├── VIETNAM_TRAVEL/
-│   ├── rawdata.csv
-│   └── links_vietnam_travel.csv
-├── SURVEY/
-│   └── tourist_survey.csv      # Mẫu hoặc dữ liệu xuất từ biểu mẫu khảo sát
-└── analysis/
-    ├── normalized_articles.csv
-    └── destination_season_stats.csv
+├── VNTRIP/rawdata.csv
+├── VIETNAM_TRAVEL/rawdata.csv
+└── analysis/                           # Các CSV kết quả tạo lại được
 
-PhanTich_DiemDen.ipynb          # Phân tích đa nguồn theo điểm đến và mùa
-TongHop_KetQua.ipynb             # Kết hợp xu hướng trực tuyến với kết quả khảo sát
+docs/index.html                         # Dashboard cho GitHub Pages
 ```
 
-## Quy trình thực hiện
-
-1. Chạy `VNTRIP/Export_Raw_Data.ipynb` để thu thập bài viết VNTRIP.
-2. Chạy `VIETNAM_TRAVEL/Export_Raw_Data.ipynb` để thu thập nội dung Vietnam.travel.
-3. Chạy `PhanTich_DiemDen.ipynb` để chuẩn hóa dữ liệu, gán điểm đến/chủ đề và tạo
-   thống kê mùa vụ.
-4. Chạy `VNTRIP/Predict.ipynb` để làm sạch dữ liệu VNTRIP và thử nghiệm mô hình
-   Linear Regression dự đoán lượt xem bài viết.
-5. Nhập phản hồi khảo sát vào `data/SURVEY/tourist_survey.csv`, sau đó chạy
-   `KHAO_SAT/PhanTich_KhaoSat.ipynb`.
-6. Chạy `TongHop_KetQua.ipynb` để so sánh mức quan tâm trực tuyến với rating và ý
-   định quay lại của du khách.
-
-## Chỉ số phân tích
-
-```text
-views_per_day = view_count / max(1, số ngày từ ngày đăng đến ngày thu thập)
-```
-
-Quy ước mùa:
-
-| Mùa | Tháng |
-|---|---|
-| Xuân | 1–3 |
-| Hè | 4–6 |
-| Thu | 7–9 |
-| Đông | 10–12 |
-
-`PhanTich_DiemDen.ipynb` xuất `destination_season_stats.csv`, gồm số bài, tổng lượt
-xem và trung vị lượt xem/ngày cho từng điểm đến theo mùa.
-
-## Kiểm soát chất lượng dữ liệu
-
-`analysis_pipeline.py` làm sạch phần văn bản còn sót lại từ giao diện, loại các bài
-trùng URL hoặc trùng nội dung trong cùng nguồn trước khi tạo bảng phân tích. Các tệp
-kiểm tra được tạo trong `data/analysis/`:
-
-- `duplicate_articles.csv` — các dòng bị loại và lý do.
-- `label_review.csv` — nhãn điểm đến/chủ đề, từ khóa làm bằng chứng và trạng thái cần rà soát.
-- `label_overrides.csv` — tệp để nhập nhãn đã kiểm tra thủ công; giữ cột `article_id` và điền
-  `validated_destination` hoặc `validated_travel_theme`, sau đó chạy lại pipeline.
-- `label_validation_summary.csv` — tổng số bài, số trùng bị loại và số nhãn cần rà soát.
-
-## Khảo sát hành vi đánh giá
-
-Để phân tích đúng phần “hành vi đánh giá” và “yếu tố ảnh hưởng”, nhóm thu thập phản
-hồi qua biểu mẫu với các cột đã có trong `data/SURVEY/tourist_survey.csv`.
-
-| Nhóm biến | Cột chính |
-|---|---|
-| Thông tin chuyến đi | `travel_date`, `destination`, `travel_theme`, `trip_purpose`, `budget_range` |
-| Đánh giá 1–5 | `overall_rating`, `landscape_rating`, `service_rating`, `price_rating`, `food_rating`, `transport_rating`, `safety_rating`, `cleanliness_rating` |
-| Hành vi sau chuyến đi | `revisit_intention`, `recommend_intention` |
-| Nhận xét mở | `review_text` |
-
-Notebook khảo sát tạo các đầu ra: `tourist_survey_clean.csv`,
-`destination_rating_stats.csv` và `revisit_factor_coefficients.csv`. Mô hình Logistic
-Regression chỉ chạy khi có tối thiểu 30 phản hồi hợp lệ và có đủ hai nhóm trả lời
-“Có/Không” cho ý định quay lại.
-
-## Môi trường chạy
-
-Python 3.12 và các thư viện:
+## Thiết lập
 
 ```bash
 python3 -m venv .venv
@@ -131,45 +52,68 @@ python3 -m venv .venv
 cp .env.example .env
 ```
 
-Trên Windows, kích hoạt môi trường bằng `.venv\\Scripts\\activate` rồi dùng
-`pip install -r requirements.txt`. Chỉnh `.env` theo phạm vi crawl mong muốn; tệp
-này chỉ dành cho máy cục bộ và không được đưa vào Git.
-
-Nên chạy crawler với giới hạn mặc định và khoảng nghỉ giữa các request. Thu thập vài
-trăm bài, đồng thời chạy lại ở nhiều thời điểm, sẽ giúp kết quả phân tích ổn định hơn.
-
-## Chạy tự động
-
-Chỉnh các tham số trong `.env`, sau đó chạy:
-
-```bash
-sh run_all.sh
-```
-
-Script lần lượt crawl VNTRIP, crawl Vietnam.travel và chạy `analysis_pipeline.py` để
-tạo các bảng kết quả trong `data/analysis/`. Muốn chỉ chạy lại phân tích trên dữ liệu
-đã có, đặt hai biến sau thành `0` trong `.env`:
+Để chỉ phân tích dữ liệu HTML đã có, đặt trong `.env`:
 
 ```text
 RUN_VNTRIP_CRAWLER=0
 RUN_VIETNAM_TRAVEL_CRAWLER=0
 ```
 
-| Biến cấu hình | Ý nghĩa |
-|---|---|
-| `VNTRIP_MAX_PAGES`, `VIETNAM_TRAVEL_MAX_PAGES` | Số trang danh mục tối đa cần duyệt |
-| `VNTRIP_MAX_ARTICLES`, `VIETNAM_TRAVEL_MAX_ARTICLES` | Số nội dung tối đa cần lấy |
-| `VNTRIP_DELAY_SECONDS`, `VIETNAM_TRAVEL_DELAY_SECONDS` | Khoảng nghỉ giữa các request |
-| `HTTP_TIMEOUT_SECONDS` | Thời gian chờ một request HTTP |
-| `RUN_SURVEY_ANALYSIS` | Bật/tắt phân tích phản hồi khảo sát |
-| `RUN_COMBINED_ANALYSIS` | Bật/tắt bảng tổng hợp xu hướng và rating |
+Chạy toàn bộ luồng:
 
-## Thiết lập Git
+```bash
+sh run_all.sh
+```
 
-`.gitignore` loại trừ môi trường Python, cấu hình cục bộ, cache Jupyter và các báo
-cáo phân tích có thể tái tạo. Dữ liệu nguồn cùng `data/analysis/label_overrides.csv`
-vẫn có thể được quản lý phiên bản để lưu vết dữ liệu và hiệu chỉnh nhãn thủ công.
+## Kết quả phân tích
 
-## Bản quyền
+- `normalized_articles.csv`: nội dung HTML đã làm sạch, gán điểm đến/chủ đề.
+- `duplicate_articles.csv`: bản ghi trùng URL hoặc nội dung bị loại.
+- `label_review.csv`: nhãn tự động, từ khóa bằng chứng và trạng thái kiểm tra.
+- `destination_season_stats.csv`: lượt xem/ngày theo điểm đến và mùa.
+- `article_snapshot_trends.csv`: tốc độ tăng lượt xem giữa các lần crawl.
+- `destination_opportunity_scores.csv`: điểm cơ hội từ 70% lượt xem/ngày và 30% số bài.
 
-Copyright (c) 2026 Icegozi. All rights reserved. Xem [COPYRIGHT.md](COPYRIGHT.md).
+Để hiệu chỉnh nhãn thủ công, điền `validated_destination` hoặc
+`validated_travel_theme` trong `data/analysis/label_overrides.csv`, sau đó chạy lại
+pipeline.
+
+## Dashboard HTML
+
+Chạy:
+
+```bash
+.venv/bin/python dashboard.py
+```
+
+Trang kết quả được tạo tại `docs/index.html`. Bật GitHub Pages với nhánh `main` và
+thư mục `/docs` để xem online tại:
+
+`https://icegozi.github.io/icegozi_travel_analysis/`
+
+Dashboard gồm danh sách việc cần làm ngay, biểu đồ điểm cơ hội, biểu đồ tăng trưởng
+từ snapshot, heatmap mùa vụ và bộ lọc điểm đến. Toàn bộ giao diện dùng HTML, CSS và
+JavaScript thuần; không cần server hoặc thư viện frontend.
+
+Mục **Tải dữ liệu CSV** trên dashboard cho phép tải raw data, danh sách URL, snapshot
+và các bảng kết quả phân tích. Các tệp được tạo trong `docs/data/` khi chạy
+`dashboard.py`, vì vậy cần commit cả thư mục này khi xuất bản qua GitHub Pages.
+
+## Snapshot định kỳ
+
+Chạy `./run_snapshot.sh` để cập nhật lượt xem của bài VNTRIP. Mẫu lịch cron nằm ở
+`cron/snapshot.cron.example`; với GitHub-only, dùng GitHub Actions theo lịch thay
+cho cron máy chủ.
+
+## Tự động chạy trên GitHub
+
+Workflow `.github/workflows/update-dashboard.yml` chạy mỗi ngày lúc **02:00 giờ
+Việt Nam/ICT (UTC+7)**. Workflow crawl dữ liệu công khai, phân tích, sinh lại
+`docs/index.html` và tự commit dữ liệu/dashboard mới để GitHub Pages cập nhật.
+
+Sau khi push workflow lần đầu, vào **Settings → Actions → General → Workflow
+permissions** và chọn **Read and write permissions**. Có thể chạy thử ngay tại tab
+**Actions**, chọn workflow “Cập nhật dữ liệu và dashboard du lịch”, sau đó bấm
+**Run workflow**.
+
+Copyright (c) 2026 Icegozi.

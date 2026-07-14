@@ -1,0 +1,65 @@
+name: Cập nhật dữ liệu và dashboard du lịch
+
+on:
+  # GitHub Actions dùng UTC: 19:00 UTC = 02:00 sáng ngày kế tiếp tại UTC+7.
+  schedule:
+    - cron: "0 19 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tourism-dashboard-update
+  cancel-in-progress: false
+
+jobs:
+  crawl-analyze-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout mã nguồn
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Thiết lập Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Cài thư viện
+        run: pip install -r requirements.txt
+
+      - name: Crawl nội dung công khai
+        env:
+          VNTRIP_MAX_PAGES: "10"
+          VNTRIP_MAX_ARTICLES: "500"
+          VNTRIP_DELAY_SECONDS: "3"
+          VIETNAM_TRAVEL_MAX_PAGES: "10"
+          VIETNAM_TRAVEL_MAX_ARTICLES: "300"
+          VIETNAM_TRAVEL_DELAY_SECONDS: "3"
+          HTTP_TIMEOUT_SECONDS: "30"
+        run: |
+          python VNTRIP/crawl_vntrip.py
+          python VIETNAM_TRAVEL/crawl_vietnam_travel.py
+
+      - name: Phân tích và tạo dashboard HTML
+        run: |
+          python analysis_pipeline.py
+          python dashboard.py
+
+      - name: Commit dữ liệu và dashboard mới nếu có thay đổi
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs data/VNTRIP/rawdata.csv data/VNTRIP/links_vntrip.csv data/VIETNAM_TRAVEL/rawdata.csv data/VIETNAM_TRAVEL/links_vietnam_travel.csv
+          git add -f data/VNTRIP/article_snapshots.csv data/VNTRIP/monthly_article_stats.csv
+          if git diff --cached --quiet; then
+            echo "Không có dữ liệu mới để commit."
+          else
+            git commit -m "chore: cập nhật dữ liệu và dashboard hằng ngày"
+            git push
+          fi

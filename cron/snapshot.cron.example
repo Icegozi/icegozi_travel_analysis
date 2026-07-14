@@ -1,0 +1,3 @@
+# Chạy mỗi ngày lúc 02:15 (giờ máy chủ). Thay /var/www/... bằng đường dẫn thực tế.
+# Log được giữ ngoài Git để tiện kiểm tra lỗi crawler.
+15 2 * * * cd /var/www/freelancer/parseHtml && /bin/sh ./run_snapshot.sh >> ./snapshot.log 2>&1

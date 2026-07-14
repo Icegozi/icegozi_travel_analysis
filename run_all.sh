@@ -49,5 +49,6 @@ else
 fi
 
 run_step "Phân tích dữ liệu" "$PYTHON_BIN" analysis_pipeline.py
+run_step "Tạo dashboard HTML" "$PYTHON_BIN" dashboard.py
 echo
-echo "Hoàn tất. Kết quả nằm trong: $ROOT_DIR/data/analysis"
+echo "Hoàn tất. Dashboard nằm trong: $ROOT_DIR/docs/index.html"
