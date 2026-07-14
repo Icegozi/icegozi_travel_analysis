@@ -33,6 +33,11 @@ RAW_COLUMNS = [
 ]
 
 
+def export_csv(df, output_file):
+    """Xuất CSV UTF-8 BOM, dùng dấu phẩy để tương thích Excel."""
+    df.to_csv(output_file, index=False, sep=",", encoding="utf-8-sig")
+
+
 def allowed_by_robots(url):
     global ROBOTS
     if ROBOTS is None:
@@ -137,10 +142,8 @@ def save_outputs(records, links):
     frame["view_count"] = pd.to_numeric(frame["view_count"], errors="coerce")
     frame["published_year"] = pd.to_numeric(frame["published_year"], errors="coerce")
     frame["published_month"] = pd.to_numeric(frame["published_month"], errors="coerce")
-    frame.to_csv(RAW_FILE, encoding="utf-8-sig", index=False)
-    pd.DataFrame(links, columns=["listing_page", "source_url"]).drop_duplicates().to_csv(
-        LINKS_FILE, encoding="utf-8-sig", index=False
-    )
+    export_csv(frame, RAW_FILE)
+    export_csv(pd.DataFrame(links, columns=["listing_page", "source_url"]).drop_duplicates(), LINKS_FILE)
     return frame
 
 
@@ -150,9 +153,7 @@ def save_snapshots(frame):
     snapshots.insert(1, "snapshot_date", snapshot_date)
     if SNAPSHOTS_FILE.exists():
         snapshots = pd.concat([pd.read_csv(SNAPSHOTS_FILE), snapshots], ignore_index=True)
-    snapshots.drop_duplicates(["article_id", "snapshot_date"], keep="last").to_csv(
-        SNAPSHOTS_FILE, encoding="utf-8-sig", index=False
-    )
+    export_csv(snapshots.drop_duplicates(["article_id", "snapshot_date"], keep="last"), SNAPSHOTS_FILE)
 
 
 def save_monthly_stats(frame):
@@ -162,7 +163,7 @@ def save_monthly_stats(frame):
         .agg(article_count=("article_id", "count"), total_view_count=("view_count", "sum"),
              average_view_count=("view_count", "mean"))
     )
-    statistics.to_csv(MONTHLY_STATS_FILE, encoding="utf-8-sig", index=False)
+    export_csv(statistics, MONTHLY_STATS_FILE)
 
 
 def crawl():

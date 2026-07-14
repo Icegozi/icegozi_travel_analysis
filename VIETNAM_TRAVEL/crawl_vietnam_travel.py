@@ -14,7 +14,9 @@ import requests
 from bs4 import BeautifulSoup
 
 BASE_URL = "https://vietnam.travel"
-CATEGORY_URLS = [BASE_URL + "/things-to-do", BASE_URL + "/places-to-go"]
+# Trang danh mục hiện dùng `place-to-go` (số ít), còn URL trang chi tiết
+# vẫn dùng `/places-to-go/<region>/<destination>`.
+CATEGORY_URLS = [BASE_URL + "/things-to-do", BASE_URL + "/place-to-go"]
 MAX_PAGES = int(os.getenv("VIETNAM_TRAVEL_MAX_PAGES", "50"))
 MAX_ARTICLES = int(os.getenv("VIETNAM_TRAVEL_MAX_ARTICLES", "300"))
 REQUEST_DELAY_SECONDS = float(os.getenv("VIETNAM_TRAVEL_DELAY_SECONDS", "3"))
@@ -28,6 +30,11 @@ RAW_COLUMNS = [
     "article_id", "content_type", "title", "published_date", "published_year", "published_month",
     "excerpt", "article_text", "source_url", "image_url", "collected_at",
 ]
+
+
+def export_csv(df, output_file):
+    """Xuất CSV UTF-8 BOM, dùng dấu phẩy để tương thích Excel."""
+    df.to_csv(output_file, index=False, sep=",", encoding="utf-8-sig")
 
 
 def allowed_by_robots(url):
@@ -111,7 +118,11 @@ def crawl():
                 break
             list_url = category_url if page == 0 else f"{category_url}?page={page}"
             print(f"Trang {page + 1}: {list_url}")
-            content_urls = get_content_links(get_soup(session, list_url))
+            try:
+                content_urls = get_content_links(get_soup(session, list_url))
+            except (requests.RequestException, PermissionError) as error:
+                print(f"  Bỏ qua trang danh mục do lỗi: {error}")
+                break
             if not content_urls:
                 break
             new_urls = [url for url in content_urls if url not in seen_urls]
@@ -123,12 +134,13 @@ def crawl():
                 seen_urls.add(url)
                 links.append({"category_url": category_url, "listing_page": page + 1, "source_url": url})
                 print(f"  {url}")
-                rows.append(parse_content(get_soup(session, url), url))
+                try:
+                    rows.append(parse_content(get_soup(session, url), url))
+                except (requests.RequestException, PermissionError) as error:
+                    print(f"  Bỏ qua nội dung do lỗi: {error}")
 
-    pd.DataFrame(rows, columns=RAW_COLUMNS).to_csv(RAW_FILE, encoding="utf-8-sig", index=False)
-    pd.DataFrame(links, columns=["category_url", "listing_page", "source_url"]).to_csv(
-        LINKS_FILE, encoding="utf-8-sig", index=False
-    )
+    export_csv(pd.DataFrame(rows, columns=RAW_COLUMNS), RAW_FILE)
+    export_csv(pd.DataFrame(links, columns=["category_url", "listing_page", "source_url"]), LINKS_FILE)
     print(f"Đã lưu {len(rows)} nội dung vào {RAW_FILE}")
 
 
