@@ -3,12 +3,19 @@
 import hashlib
 import os
 import re
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urljoin
 
 import pandas as pd
 import requests
+
+# Khi chạy trực tiếp `python VNTRIP/crawl_vntrip.py`, Python chỉ thêm thư mục
+# VNTRIP vào sys.path. Bổ sung thư mục gốc để import được package common.
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 from common.config import crawler_limits
 from common.csv_utils import export_csv
@@ -18,7 +25,7 @@ from common.run_manifest import CrawlReport
 BASE_URL = "https://www.vntrip.vn"
 LIST_URL = BASE_URL + "/cam-nang/du-lich"
 LIMITS = crawler_limits("VNTRIP", default_pages=50, default_new_articles=500)
-DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "VNTRIP"
+DATA_DIR = ROOT_DIR / "data" / "VNTRIP"
 RAW_FILE = DATA_DIR / "rawdata.csv"
 LINKS_FILE = DATA_DIR / "links_vntrip.csv"
 SNAPSHOTS_FILE = DATA_DIR / "article_snapshots.csv"

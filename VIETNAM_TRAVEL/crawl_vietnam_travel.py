@@ -3,12 +3,18 @@
 import hashlib
 import os
 import re
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
 import pandas as pd
 import requests
+
+# Hỗ trợ chạy trực tiếp từ workflow hoặc terminal mà vẫn import được common/.
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 from common.config import crawler_limits
 from common.csv_utils import export_csv
@@ -20,7 +26,7 @@ BASE_URL = "https://vietnam.travel"
 # vẫn dùng `/places-to-go/<region>/<destination>`.
 CATEGORY_URLS = [BASE_URL + "/things-to-do", BASE_URL + "/place-to-go"]
 LIMITS = crawler_limits("VIETNAM_TRAVEL", default_pages=50, default_new_articles=300)
-DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "VIETNAM_TRAVEL"
+DATA_DIR = ROOT_DIR / "data" / "VIETNAM_TRAVEL"
 RAW_FILE = DATA_DIR / "rawdata.csv"
 LINKS_FILE = DATA_DIR / "links_vietnam_travel.csv"
 MANIFEST_FILE = DATA_DIR / "crawl_manifest.json"

@@ -41,6 +41,8 @@ jobs:
       HTTP_TIMEOUT_SECONDS: "3"
       HTTP_RETRIES: "2"
       PYTHON_BIN: ""
+      # Cho phép các script trong thư mục con import package common/ ở project root.
+      PYTHONPATH: ${{ github.workspace }}
 
     steps:
       - name: Kiểm tra chu kỳ crawl 3 ngày
