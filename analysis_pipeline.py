@@ -1,17 +1,23 @@
 """Chạy tự động các phân tích dữ liệu du lịch không cần mở notebook."""
 
+import json
 import re
 import unicodedata
+from datetime import UTC, datetime
 from math import log
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 
 import pandas as pd
 
+from common.csv_utils import export_csv
+
 ROOT_DIR = Path(__file__).resolve().parent
 DATA_DIR = ROOT_DIR / "data"
 ANALYSIS_DIR = DATA_DIR / "analysis"
 LABEL_OVERRIDES_FILE = ANALYSIS_DIR / "label_overrides.csv"
+RUN_METADATA_FILE = ANALYSIS_DIR / "run_metadata.json"
+SCHEMA_VERSION = "1.0"
 
 DESTINATIONS = {
     "Hà Nội": ["hà nội", "hanoi"], "Hạ Long": ["hạ long", "ha long"],
@@ -35,11 +41,6 @@ BOILERPLATE_MARKERS = (
     "gửi 0 bình luận", "bạn có thể quan tâm", "một số cẩm nang khác",
     "cần tìm khách sạn giá tốt", "đăng ký nhận tin", "bản quyền ©",
 )
-
-
-def export_csv(df, output_file):
-    """Xuất CSV chuẩn UTF-8 BOM để mở đúng tiếng Việt trong Excel."""
-    df.to_csv(output_file, index=False, sep=",", encoding="utf-8-sig")
 
 
 def clean_text(value):
@@ -113,6 +114,9 @@ def normalize_articles():
         if raw_file.parent.name == "analysis":
             continue
         frame = pd.read_csv(raw_file)
+        missing = {"article_id", "title", "article_text", "source_url", "collected_at"} - set(frame.columns)
+        if missing:
+            raise ValueError(f"{raw_file} thiếu cột bắt buộc: {sorted(missing)}")
         if not frame.empty:
             frame["source"] = raw_file.parent.name
             frames.append(frame)
@@ -296,9 +300,30 @@ def build_opportunity_scores():
     return scores
 
 
+def write_run_metadata(articles):
+    """Tổng hợp manifest crawler; quality gate dùng tệp này để kiểm tra độ mới dữ liệu."""
+    sources = {}
+    for source_dir in DATA_DIR.iterdir():
+        manifest_file = source_dir / "crawl_manifest.json"
+        if source_dir.is_dir() and manifest_file.exists():
+            try:
+                sources[source_dir.name] = json.loads(manifest_file.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as error:
+                raise ValueError(f"Manifest không hợp lệ: {manifest_file}: {error}") from error
+    metadata = {
+        "schema_version": SCHEMA_VERSION,
+        "generated_at": datetime.now(UTC).isoformat(),
+        "normalized_article_count": int(len(articles)),
+        "sources": sources,
+    }
+    RUN_METADATA_FILE.write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"Đã tạo {RUN_METADATA_FILE.name} với {len(sources)} manifest nguồn.")
+
+
 if __name__ == "__main__":
     ANALYSIS_DIR.mkdir(exist_ok=True)
     articles = normalize_articles()
     analyze_interest(articles)
     analyze_snapshots()
     build_opportunity_scores()
+    write_run_metadata(articles)

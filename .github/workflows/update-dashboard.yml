@@ -2,9 +2,20 @@ name: Cập nhật dữ liệu và dashboard du lịch
 
 on:
   # GitHub Actions dùng UTC: 19:00 UTC = 02:00 sáng ngày kế tiếp tại UTC+7.
+  # Workflow kiểm tra hằng ngày nhưng chỉ crawl đúng chu kỳ 3 ngày.
   schedule:
     - cron: "0 19 * * *"
   workflow_dispatch:
+    inputs:
+      run_mode:
+        description: "Chế độ chạy"
+        required: true
+        default: "full"
+        type: choice
+        options:
+          - full
+          - vntrip_only
+          - dashboard_only
 
 permissions:
   contents: write
@@ -16,46 +27,111 @@ concurrency:
 jobs:
   crawl-analyze-publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 180
+    # Cùng tên và giá trị với .env hiện tại; không cần tải .env lên GitHub.
+    env:
+      RUN_VNTRIP_CRAWLER: "1"
+      RUN_VIETNAM_TRAVEL_CRAWLER: "1"
+      VNTRIP_MAX_PAGES: "50"
+      VNTRIP_MAX_NEW_ARTICLES: "1000"
+      VIETNAM_TRAVEL_MAX_PAGES: "50"
+      VIETNAM_TRAVEL_MAX_NEW_ARTICLES: "1000"
+      VNTRIP_DELAY_SECONDS: "3"
+      VIETNAM_TRAVEL_DELAY_SECONDS: "3"
+      HTTP_TIMEOUT_SECONDS: "3"
+      HTTP_RETRIES: "2"
+      PYTHON_BIN: ""
 
     steps:
+      - name: Kiểm tra chu kỳ crawl 3 ngày
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "SHOULD_RUN=true" >> "$GITHUB_ENV"
+            echo "RUN_MODE=${{ inputs.run_mode }}" >> "$GITHUB_ENV"
+            echo "Chạy thủ công với chế độ: ${{ inputs.run_mode }}."
+            exit 0
+          fi
+          anchor="2026-07-15"
+          today="$(TZ=Asia/Ho_Chi_Minh date +%F)"
+          elapsed_days=$(( ($(date -d "$today" +%s) - $(date -d "$anchor" +%s)) / 86400 ))
+          if [ $((elapsed_days % 3)) -eq 0 ]; then
+            echo "SHOULD_RUN=true" >> "$GITHUB_ENV"
+            echo "RUN_MODE=full" >> "$GITHUB_ENV"
+            echo "Đến chu kỳ 3 ngày: bắt đầu cập nhật."
+          else
+            echo "SHOULD_RUN=false" >> "$GITHUB_ENV"
+            echo "RUN_MODE=skip" >> "$GITHUB_ENV"
+            echo "Chưa đến chu kỳ crawl; bỏ qua hôm nay."
+          fi
+
       - name: Checkout mã nguồn
+        if: env.SHOULD_RUN == 'true'
         uses: actions/checkout@v4
         with:
           ref: main
 
       - name: Thiết lập Python
+        if: env.SHOULD_RUN == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
 
       - name: Cài thư viện
+        if: env.SHOULD_RUN == 'true'
         run: pip install -r requirements.txt
 
       - name: Crawl nội dung công khai
-        env:
-          VNTRIP_MAX_PAGES: "10"
-          VNTRIP_MAX_ARTICLES: "500"
-          VNTRIP_DELAY_SECONDS: "3"
-          VIETNAM_TRAVEL_MAX_PAGES: "10"
-          VIETNAM_TRAVEL_MAX_ARTICLES: "300"
-          VIETNAM_TRAVEL_DELAY_SECONDS: "3"
-          HTTP_TIMEOUT_SECONDS: "30"
+        if: env.SHOULD_RUN == 'true'
         run: |
-          python VNTRIP/crawl_vntrip.py
-          python VIETNAM_TRAVEL/crawl_vietnam_travel.py
+          case "$RUN_MODE" in
+            full)
+              if [ "$RUN_VNTRIP_CRAWLER" = "1" ]; then python VNTRIP/crawl_vntrip.py; fi
+              if [ "$RUN_VIETNAM_TRAVEL_CRAWLER" = "1" ]; then python VIETNAM_TRAVEL/crawl_vietnam_travel.py; fi
+              ;;
+            vntrip_only)
+              if [ "$RUN_VNTRIP_CRAWLER" = "1" ]; then python VNTRIP/crawl_vntrip.py; fi
+              ;;
+            dashboard_only)
+              echo "Chỉ tạo lại dashboard từ dữ liệu đã có."
+              ;;
+            *)
+              echo "RUN_MODE không hợp lệ: $RUN_MODE" >&2
+              exit 1
+              ;;
+          esac
 
       - name: Phân tích và tạo dashboard HTML
+        if: env.SHOULD_RUN == 'true'
         run: |
           python analysis_pipeline.py
           python dashboard.py
 
+      - name: Kiểm tra chất lượng trước khi publish
+        if: env.SHOULD_RUN == 'true'
+        env:
+          QUALITY_MIN_TOTAL_ARTICLES: "20"
+          QUALITY_MIN_SOURCE_ARTICLES: "5"
+          QUALITY_MAX_LABEL_REVIEW_RATE: "0.90"
+          QUALITY_REQUIRE_FRESH_MANIFEST: "1"
+          QUALITY_MAX_MANIFEST_AGE_DAYS: "4"
+        run: |
+          if [ "$RUN_MODE" = "full" ]; then
+            export QUALITY_REQUIRED_SOURCES="VNTRIP,VIETNAM_TRAVEL"
+          elif [ "$RUN_MODE" = "vntrip_only" ]; then
+            export QUALITY_REQUIRED_SOURCES="VNTRIP"
+          else
+            export QUALITY_REQUIRED_SOURCES=""
+          fi
+          python quality_gate.py
+
       - name: Commit dữ liệu và dashboard mới nếu có thay đổi
+        if: env.SHOULD_RUN == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs data/VNTRIP/rawdata.csv data/VNTRIP/links_vntrip.csv data/VIETNAM_TRAVEL/rawdata.csv data/VIETNAM_TRAVEL/links_vietnam_travel.csv
+          git add docs data/analysis/run_metadata.json data/VNTRIP/rawdata.csv data/VNTRIP/links_vntrip.csv data/VNTRIP/crawl_manifest.json data/VIETNAM_TRAVEL/rawdata.csv data/VIETNAM_TRAVEL/links_vietnam_travel.csv data/VIETNAM_TRAVEL/crawl_manifest.json
           git add -f data/VNTRIP/article_snapshots.csv data/VNTRIP/monthly_article_stats.csv
           if git diff --cached --quiet; then
             echo "Không có dữ liệu mới để commit."

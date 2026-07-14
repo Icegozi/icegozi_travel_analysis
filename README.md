@@ -78,6 +78,20 @@ sh run_all.sh
 `validated_travel_theme` trong `data/analysis/label_overrides.csv`, sau đó chạy lại
 pipeline.
 
+## Cập nhật dữ liệu không trùng lặp
+
+Hai crawler nhận diện bài đã parse bằng `source_url`. Mỗi lần chạy, `rawdata.csv`
+được ghi lại từ tập dữ liệu đã hợp nhất, nên không sinh dòng URL trùng. VNTRIP cập
+nhật metadata bài có sẵn; Vietnam.travel giữ bài cũ và chỉ tải trang chi tiết của URL
+mới. `VNTRIP_MAX_NEW_ARTICLES` và `VIETNAM_TRAVEL_MAX_NEW_ARTICLES` là số bài
+**mới** tối đa trong mỗi lần chạy. Tên cũ `*_MAX_ARTICLES` vẫn được đọc để không
+làm hỏng cấu hình cũ, nhưng không nên dùng trong cấu hình mới.
+
+Mỗi crawler cũng tạo `crawl_manifest.json`, ghi số trang đã đọc, URL phát hiện,
+bài mới/bài cũ và lỗi. Pipeline tổng hợp các báo cáo đó vào
+`data/analysis/run_metadata.json`; đây là cơ sở để quality gate phát hiện dữ liệu
+quá cũ hoặc một nguồn crawl không thực sự hoàn tất.
+
 ## Dashboard HTML
 
 Chạy:
@@ -107,13 +121,22 @@ cho cron máy chủ.
 
 ## Tự động chạy trên GitHub
 
-Workflow `.github/workflows/update-dashboard.yml` chạy mỗi ngày lúc **02:00 giờ
-Việt Nam/ICT (UTC+7)**. Workflow crawl dữ liệu công khai, phân tích, sinh lại
-`docs/index.html` và tự commit dữ liệu/dashboard mới để GitHub Pages cập nhật.
+Workflow `.github/workflows/update-dashboard.yml` kiểm tra lúc **02:00 giờ Việt
+Nam/ICT (UTC+7)** mỗi ngày, nhưng chỉ crawl đúng **3 ngày một lần**. Workflow crawl
+dữ liệu công khai, phân tích, sinh lại `docs/index.html` và tự commit dữ liệu/dashboard
+mới để GitHub Pages cập nhật. Chạy thủ công từ tab Actions luôn thực hiện ngay, không
+chờ chu kỳ.
 
 Sau khi push workflow lần đầu, vào **Settings → Actions → General → Workflow
 permissions** và chọn **Read and write permissions**. Có thể chạy thử ngay tại tab
 **Actions**, chọn workflow “Cập nhật dữ liệu và dashboard du lịch”, sau đó bấm
 **Run workflow**.
+
+Khi chạy thủ công, chọn một trong ba chế độ: `full` (crawl cả hai nguồn),
+`vntrip_only` (chỉ crawl VNTRIP) hoặc `dashboard_only` (phân tích và tạo lại
+dashboard từ dữ liệu hiện có). Trước khi commit/publish, `quality_gate.py` kiểm tra
+số bài tối thiểu, số bài theo nguồn, tỷ lệ nhãn cần rà soát, bảng điểm cơ hội, HTML
+dashboard và manifest mới của từng nguồn. Nếu không đạt ngưỡng, workflow thất bại
+và không publish dữ liệu mới.
 
 Copyright (c) 2026 Icegozi.

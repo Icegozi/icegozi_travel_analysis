@@ -3,56 +3,32 @@
 import hashlib
 import os
 import re
-import time
-import urllib.robotparser
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
 import pandas as pd
 import requests
-from bs4 import BeautifulSoup
+
+from common.config import crawler_limits
+from common.csv_utils import export_csv
+from common.http_client import CrawlHttpClient
+from common.run_manifest import CrawlReport
 
 BASE_URL = "https://vietnam.travel"
 # Trang danh mục hiện dùng `place-to-go` (số ít), còn URL trang chi tiết
 # vẫn dùng `/places-to-go/<region>/<destination>`.
 CATEGORY_URLS = [BASE_URL + "/things-to-do", BASE_URL + "/place-to-go"]
-MAX_PAGES = int(os.getenv("VIETNAM_TRAVEL_MAX_PAGES", "50"))
-MAX_ARTICLES = int(os.getenv("VIETNAM_TRAVEL_MAX_ARTICLES", "300"))
-REQUEST_DELAY_SECONDS = float(os.getenv("VIETNAM_TRAVEL_DELAY_SECONDS", "3"))
-HTTP_TIMEOUT_SECONDS = int(os.getenv("HTTP_TIMEOUT_SECONDS", "30"))
+LIMITS = crawler_limits("VIETNAM_TRAVEL", default_pages=50, default_new_articles=300)
 DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "VIETNAM_TRAVEL"
 RAW_FILE = DATA_DIR / "rawdata.csv"
 LINKS_FILE = DATA_DIR / "links_vietnam_travel.csv"
+MANIFEST_FILE = DATA_DIR / "crawl_manifest.json"
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; TourismResearchBot/1.0)"}
-ROBOTS = None
 RAW_COLUMNS = [
     "article_id", "content_type", "title", "published_date", "published_year", "published_month",
     "excerpt", "article_text", "source_url", "image_url", "collected_at",
 ]
-
-
-def export_csv(df, output_file):
-    """Xuất CSV UTF-8 BOM, dùng dấu phẩy để tương thích Excel."""
-    df.to_csv(output_file, index=False, sep=",", encoding="utf-8-sig")
-
-
-def allowed_by_robots(url):
-    global ROBOTS
-    if ROBOTS is None:
-        ROBOTS = urllib.robotparser.RobotFileParser()
-        ROBOTS.set_url(BASE_URL + "/robots.txt")
-        ROBOTS.read()
-    return ROBOTS.can_fetch(HEADERS["User-Agent"], url)
-
-
-def get_soup(session, url):
-    if not allowed_by_robots(url):
-        raise PermissionError(f"robots.txt không cho phép thu thập: {url}")
-    response = session.get(url, headers=HEADERS, timeout=HTTP_TIMEOUT_SECONDS)
-    response.raise_for_status()
-    time.sleep(REQUEST_DELAY_SECONDS)
-    return BeautifulSoup(response.text, "html.parser")
 
 
 def parse_iso_date(value):
@@ -108,40 +84,83 @@ def parse_content(soup, url):
     }
 
 
+def load_existing_records():
+    """Nạp dữ liệu cũ theo URL để không parse lại bài đã thu thập."""
+    if not RAW_FILE.exists():
+        return {}
+    frame = pd.read_csv(RAW_FILE)
+    if "source_url" not in frame:
+        return {}
+    frame = frame.dropna(subset=["source_url"]).drop_duplicates("source_url", keep="last")
+    return {row["source_url"]: row.reindex(RAW_COLUMNS).to_dict() for _, row in frame.iterrows()}
+
+
+def load_existing_links():
+    if not LINKS_FILE.exists():
+        return []
+    frame = pd.read_csv(LINKS_FILE)
+    columns = ["category_url", "listing_page", "source_url"]
+    if not set(columns).issubset(frame.columns):
+        return []
+    return frame[columns].dropna(subset=["source_url"]).to_dict(orient="records")
+
+
+def save_outputs(records, links):
+    frame = pd.DataFrame(records.values(), columns=RAW_COLUMNS)
+    export_csv(frame, RAW_FILE)
+    link_frame = pd.DataFrame(links, columns=["category_url", "listing_page", "source_url"])
+    export_csv(link_frame.drop_duplicates("source_url", keep="last"), LINKS_FILE)
+    return frame
+
+
 def crawl():
+    """Chỉ parse URL mới; dữ liệu cũ được giữ lại và không tạo dòng trùng."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    session = requests.Session()
-    rows, links, seen_urls = [], [], set()
+    client = CrawlHttpClient(HEADERS["User-Agent"], LIMITS.delay_seconds, LIMITS.timeout_seconds, LIMITS.retries)
+    records = load_existing_records()
+    links = load_existing_links()
+    report = CrawlReport(source="VIETNAM_TRAVEL")
+    seen_urls, new_article_count = set(), 0
     for category_url in CATEGORY_URLS:
-        for page in range(MAX_PAGES):
-            if len(rows) >= MAX_ARTICLES:
+        for page in range(LIMITS.max_pages):
+            if new_article_count >= LIMITS.max_new_articles:
                 break
             list_url = category_url if page == 0 else f"{category_url}?page={page}"
             print(f"Trang {page + 1}: {list_url}")
             try:
-                content_urls = get_content_links(get_soup(session, list_url))
+                content_urls = get_content_links(client.get_soup(list_url))
             except (requests.RequestException, PermissionError) as error:
                 print(f"  Bỏ qua trang danh mục do lỗi: {error}")
+                report.errors.append(f"Danh mục {list_url}: {error}")
                 break
+            report.listing_pages_seen += 1
+            report.urls_discovered += len(content_urls)
             if not content_urls:
                 break
-            new_urls = [url for url in content_urls if url not in seen_urls]
-            if not new_urls:
-                break
-            for url in new_urls:
-                if len(rows) >= MAX_ARTICLES:
+            page_urls = [url for url in content_urls if url not in seen_urls]
+            if not page_urls:
+                continue
+            for url in page_urls:
+                if new_article_count >= LIMITS.max_new_articles:
                     break
                 seen_urls.add(url)
                 links.append({"category_url": category_url, "listing_page": page + 1, "source_url": url})
+                if url in records:
+                    report.existing_urls += 1
+                    print(f"  Đã có dữ liệu: {url}")
+                    continue
                 print(f"  {url}")
                 try:
-                    rows.append(parse_content(get_soup(session, url), url))
+                    records[url] = parse_content(client.get_soup(url), url)
+                    new_article_count += 1
+                    report.new_records += 1
                 except (requests.RequestException, PermissionError) as error:
+                    report.errors.append(f"Nội dung {url}: {error}")
                     print(f"  Bỏ qua nội dung do lỗi: {error}")
 
-    export_csv(pd.DataFrame(rows, columns=RAW_COLUMNS), RAW_FILE)
-    export_csv(pd.DataFrame(links, columns=["category_url", "listing_page", "source_url"]), LINKS_FILE)
-    print(f"Đã lưu {len(rows)} nội dung vào {RAW_FILE}")
+    frame = save_outputs(records, links)
+    report.write(MANIFEST_FILE)
+    print(f"Đã thêm {new_article_count} nội dung mới; tổng cộng {len(frame)} nội dung trong {RAW_FILE}")
 
 
 if __name__ == "__main__":
