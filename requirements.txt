@@ -1,0 +1,8 @@
+# Runtime and notebook dependencies (Python 3.12)
+pandas>=2.2,<3.0
+numpy>=1.26,<3.0
+requests>=2.31,<3.0
+beautifulsoup4>=4.12,<5.0
+scikit-learn>=1.4,<2.0
+matplotlib>=3.8,<4.0
+ipykernel>=6.29,<7.0
