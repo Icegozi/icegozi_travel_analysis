@@ -3,58 +3,33 @@
 import hashlib
 import os
 import re
-import time
-import urllib.robotparser
 from datetime import UTC, datetime
 from pathlib import Path
 from urllib.parse import urljoin
 
 import pandas as pd
 import requests
-from bs4 import BeautifulSoup
+
+from common.config import crawler_limits
+from common.csv_utils import export_csv
+from common.http_client import CrawlHttpClient
+from common.run_manifest import CrawlReport
 
 BASE_URL = "https://www.vntrip.vn"
 LIST_URL = BASE_URL + "/cam-nang/du-lich"
-MAX_PAGES = int(os.getenv("VNTRIP_MAX_PAGES", "50"))
-MAX_ARTICLES = int(os.getenv("VNTRIP_MAX_ARTICLES", "500"))
-REQUEST_DELAY_SECONDS = float(os.getenv("VNTRIP_DELAY_SECONDS", "3"))
-HTTP_TIMEOUT_SECONDS = int(os.getenv("HTTP_TIMEOUT_SECONDS", "30"))
+LIMITS = crawler_limits("VNTRIP", default_pages=50, default_new_articles=500)
 DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "VNTRIP"
 RAW_FILE = DATA_DIR / "rawdata.csv"
 LINKS_FILE = DATA_DIR / "links_vntrip.csv"
 SNAPSHOTS_FILE = DATA_DIR / "article_snapshots.csv"
 MONTHLY_STATS_FILE = DATA_DIR / "monthly_article_stats.csv"
+MANIFEST_FILE = DATA_DIR / "crawl_manifest.json"
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; TourismResearchBot/1.0)"}
-ROBOTS = None
 
 RAW_COLUMNS = [
     "article_id", "title", "published_date", "published_year", "published_month",
     "view_count", "excerpt", "article_text", "source_url", "image_url", "collected_at",
 ]
-
-
-def export_csv(df, output_file):
-    """Xuất CSV UTF-8 BOM, dùng dấu phẩy để tương thích Excel."""
-    df.to_csv(output_file, index=False, sep=",", encoding="utf-8-sig")
-
-
-def allowed_by_robots(url):
-    global ROBOTS
-    if ROBOTS is None:
-        ROBOTS = urllib.robotparser.RobotFileParser()
-        ROBOTS.set_url(BASE_URL + "/robots.txt")
-        ROBOTS.read()
-    return ROBOTS.can_fetch(HEADERS["User-Agent"], url)
-
-
-def getdata(session, url):
-    """Tải một trang sau khi kiểm tra robots.txt và giới hạn tốc độ."""
-    if not allowed_by_robots(url):
-        raise PermissionError(f"robots.txt không cho phép thu thập: {url}")
-    response = session.get(url, headers=HEADERS, timeout=HTTP_TIMEOUT_SECONDS)
-    response.raise_for_status()
-    time.sleep(REQUEST_DELAY_SECONDS)
-    return BeautifulSoup(response.text, "html.parser")
 
 
 def parse_date(text):
@@ -167,19 +142,28 @@ def save_monthly_stats(frame):
 
 
 def crawl():
-    """Crawl tối đa MAX_ARTICLES, lưu checkpoint sau từng trang để có thể chạy tiếp."""
+    """Crawl tối đa số bài *mới*, vẫn giữ dữ liệu đã có và lưu báo cáo lần chạy."""
     DATA_DIR.mkdir(exist_ok=True)
     records = load_existing_records()
     links = []
-    session = requests.Session()
-    for page in range(1, MAX_PAGES + 1):
-        if len(records) >= MAX_ARTICLES:
+    report = CrawlReport(source="VNTRIP")
+    client = CrawlHttpClient(HEADERS["User-Agent"], LIMITS.delay_seconds, LIMITS.timeout_seconds, LIMITS.retries)
+    new_article_count = 0
+    for page in range(1, LIMITS.max_pages + 1):
+        if new_article_count >= LIMITS.max_new_articles:
             break
         # VNTRIP dùng đường dẫn /page/<n>, không dùng query ?page=<n>.
         # Query cũ luôn trả về danh sách trang đầu nên chỉ thu được các URL trùng nhau.
         listing_url = LIST_URL if page == 1 else f"{LIST_URL}/page/{page}"
         print(f"Trang {page}: {listing_url}")
-        cards = get_article_cards(getdata(session, listing_url))
+        try:
+            cards = get_article_cards(client.get_soup(listing_url))
+        except (requests.RequestException, PermissionError) as error:
+            report.errors.append(f"Danh mục {listing_url}: {error}")
+            print(f"  Bỏ qua trang danh mục do lỗi: {error}")
+            break
+        report.listing_pages_seen += 1
+        report.urls_discovered += len(cards)
         if not cards:
             print("Không còn bài viết ở trang này.")
             break
@@ -188,20 +172,28 @@ def crawl():
         for card in cards:
             links.append({"listing_page": page, "source_url": card["source_url"]})
             if card["source_url"] in records:
+                report.existing_urls += 1
                 records[card["source_url"]].update({
                     key: value for key, value in card.items() if value not in ("", None)
                 })
                 records[card["source_url"]]["collected_at"] = datetime.now(UTC).isoformat()
                 continue
             print(f"  {card['source_url']}")
-            records[card["source_url"]] = parse_article(getdata(session, card["source_url"]), card)
-            if len(records) >= MAX_ARTICLES:
+            try:
+                records[card["source_url"]] = parse_article(client.get_soup(card["source_url"]), card)
+                new_article_count += 1
+                report.new_records += 1
+            except (requests.RequestException, PermissionError) as error:
+                report.errors.append(f"Nội dung {card['source_url']}: {error}")
+                print(f"  Bỏ qua nội dung do lỗi: {error}")
+            if new_article_count >= LIMITS.max_new_articles:
                 break
         save_outputs(records, links)
 
     frame = save_outputs(records, links)
     save_snapshots(frame)
     save_monthly_stats(frame)
+    report.write(MANIFEST_FILE)
     print(f"Đã lưu {len(frame)} bài viết vào {RAW_FILE}")
 
 
