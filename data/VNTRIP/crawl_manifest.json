@@ -1,0 +1,10 @@
+{
+  "source": "VNTRIP",
+  "started_at": "2026-07-14T18:07:26.975246+00:00",
+  "finished_at": "2026-07-14T19:04:43.786666+00:00",
+  "listing_pages_seen": 50,
+  "urls_discovered": 1000,
+  "existing_urls": 200,
+  "new_records": 800,
+  "errors": []
+}
