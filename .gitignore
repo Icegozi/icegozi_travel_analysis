@@ -1,0 +1,49 @@
+# Python environments, caches and build artifacts
+.venv/
+venv/
+env/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Jupyter's local state
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
+
+# Generated crawl and analysis artifacts. Source datasets and manual label
+# overrides remain versionable; these files can be regenerated with run_all.sh.
+data/VNTRIP/article_snapshots.csv
+data/VNTRIP/monthly_article_stats.csv
+data/VNTRIP/dataset.csv
+data/analysis/normalized_articles.csv
+data/analysis/destination_season_stats.csv
+data/analysis/destination_theme_stats.csv
+data/analysis/destination_rating_stats.csv
+data/analysis/destination_combined_summary.csv
+data/analysis/tourist_survey_clean.csv
+data/analysis/revisit_factor_coefficients.csv
+data/analysis/duplicate_articles.csv
+data/analysis/label_review.csv
+data/analysis/label_validation_summary.csv
