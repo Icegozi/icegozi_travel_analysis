@@ -1,12 +1,12 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-14T19:40:52.458471+00:00",
+  "generated_at": "2026-07-17T19:40:09.687829+00:00",
   "normalized_article_count": 1062,
   "sources": {
     "VIETNAM_TRAVEL": {
       "source": "VIETNAM_TRAVEL",
-      "started_at": "2026-07-14T19:34:44.467491+00:00",
-      "finished_at": "2026-07-14T19:40:49.115702+00:00",
+      "started_at": "2026-07-17T19:31:20.300508+00:00",
+      "finished_at": "2026-07-17T19:40:07.163720+00:00",
       "listing_pages_seen": 100,
       "urls_discovered": 5050,
       "existing_urls": 62,
@@ -21,8 +21,8 @@
     },
     "VNTRIP": {
       "source": "VNTRIP",
-      "started_at": "2026-07-14T19:31:45.932658+00:00",
-      "finished_at": "2026-07-14T19:34:43.970169+00:00",
+      "started_at": "2026-07-17T19:27:41.290837+00:00",
+      "finished_at": "2026-07-17T19:31:19.881319+00:00",
       "listing_pages_seen": 50,
       "urls_discovered": 1000,
       "existing_urls": 1000,
