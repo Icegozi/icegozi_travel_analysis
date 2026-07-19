@@ -1,29 +1,36 @@
-# Agent guidance for parseHtml
+# Contributor guidance
 
-## Project overview
+## Project scope
 
-- This repository is a Vietnamese data science student project with two main parts:
-  - `Chotot/`: HTML scraping and regression modeling for real estate prices from nha.chotot.com.
-  - `Rating/`: Goodreads book rating data collection and machine learning modeling.
-- The primary implementation is in Jupyter notebooks, not a conventional Python package.
+This is a Python research pipeline for analysing observable online interest in
+Vietnamese tourism destinations. The maintained execution path is:
 
-## Key files
+`run_all.sh` → crawlers → `analysis_pipeline.py` → `dashboard.py`.
 
-- `README.md` — project report and execution instructions in Vietnamese.
-- `Chotot/Chotot_Scraping_Data.ipynb` — scraping workflow for Chotot real estate listings.
-- `Chotot/Predict.ipynb` — cleaning, EDA, and regression modeling for real estate pricing.
-- `Rating/Predict.ipynb` — data preprocessing and regression modeling for book ratings.
-- `Chotot/dataset.csv`, `Chotot/rawdata.csv`, `Rating/X.csv`, `Rating/y.csv` — core datasets used by notebooks.
+## Source layout
 
-## How to assist effectively
+- Keep source-specific parsing inside `VNTRIP/`, `VIETNAM_TRAVEL/`, or
+  `PROVINCIAL_PORTALS/`.
+- Put shared configuration, HTTP behaviour, manifests, and CSV helpers in `common/`.
+- Treat `dashboard_assets/` as the dashboard template; `docs/` is generated output.
+- Treat `data/` as runtime data, not hand-maintained source code.
 
-- Use the notebooks as the source of truth for modeling, preprocessing, and scraping logic.
-- Preserve dataset file paths and the notebook-driven workflow.
-- If adding or updating code, prefer Python 3 data science idioms (`pandas`, `scikit-learn`, `numpy`) and keep changes compatible with Jupyter/Colab execution.
-- Do not assume there is a package-level build/test system; this repository is organized around notebooks and CSV datasets.
+## Change rules
 
-## Special notes
+- Respect `robots.txt`; do not add login, CAPTCHA bypass, or personal-data collection.
+- Preserve `source_url` deduplication and crawl manifests when changing a crawler.
+- Keep `.env` local and update `.env.example`, README, and the GitHub workflow together
+  when changing configuration defaults.
+- Use Python 3 data tooling (`pandas`, `requests`, BeautifulSoup) and four-space
+  indentation with descriptive `snake_case` identifiers.
+- Do not change generated CSV or `docs/` by hand; rerun the relevant script.
 
-- The repository is structured for exploration and reporting, not production deployment.
-- Many filenames and documentation are in Vietnamese; translate only when needed for comprehension, but preserve original names in code and file references.
-- There are no existing chat customization files in this workspace, so use this guidance for future agent behavior.
+## Validation
+
+Run offline regression tests after parser, normalisation, or configuration changes:
+
+```bash
+.venv/bin/python -m unittest tests/test_refactor.py
+```
+
+Run `sh run_all.sh` when validating the full pipeline with permitted network access.
