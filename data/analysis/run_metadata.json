@@ -1,33 +1,28 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-17T19:40:09.687829+00:00",
-  "normalized_article_count": 1062,
+  "generated_at": "2026-07-19T07:17:38.297784+00:00",
+  "normalized_article_count": 289,
   "sources": {
-    "VIETNAM_TRAVEL": {
-      "source": "VIETNAM_TRAVEL",
-      "started_at": "2026-07-17T19:31:20.300508+00:00",
-      "finished_at": "2026-07-17T19:40:07.163720+00:00",
-      "listing_pages_seen": 100,
-      "urls_discovered": 5050,
-      "existing_urls": 62,
-      "new_records": 0,
+    "PROVINCIAL_PORTALS": {
+      "source": "PROVINCIAL_PORTALS",
+      "started_at": "2026-07-19T07:14:14.482584+00:00",
+      "finished_at": "2026-07-19T07:17:36.762471+00:00",
+      "listing_pages_seen": 20,
+      "urls_discovered": 330,
+      "existing_urls": 6,
+      "new_records": 37,
       "errors": [
-        "Nội dung https://vietnam.travel/places-to-go/central-vietnam/da-lat: 404 Client Error: Not Found for url: https://vietnam.travel/places-to-go/central-vietnam/da-lat",
-        "Nội dung https://vietnam.travel/places-to-go/southern-vietnam/mui-ne: 404 Client Error: Not Found for url: https://vietnam.travel/places-to-go/southern-vietnam/mui-ne",
-        "Nội dung https://vietnam.travel/places-to-go/southern-vietnam/ho-chi-minh: 404 Client Error: Not Found for url: https://vietnam.travel/places-to-go/southern-vietnam/ho-chi-minh",
-        "Nội dung https://vietnam.travel/places-to-go/southern-vietnam/vung-tau: 404 Client Error: Not Found for url: https://vietnam.travel/places-to-go/southern-vietnam/vung-tau",
-        "Nội dung https://vietnam.travel/places-to-go/southern-vietnam/mekong-delta: 404 Client Error: Not Found for url: https://vietnam.travel/places-to-go/southern-vietnam/mekong-delta"
+        "Hải Phòng https://haiphongtourism.gov.vn/: Không thể kiểm tra robots.txt: https://haiphongtourism.gov.vn",
+        "Hà Giang https://myhagiang.vn/: Không thể kiểm tra robots.txt: https://myhagiang.vn",
+        "Lào Cai https://dulichlaocai.vn/: Không thể kiểm tra robots.txt: https://dulichlaocai.vn",
+        "Nghệ An https://dulichnghean.gov.vn/: Không thể kiểm tra robots.txt: https://dulichnghean.gov.vn",
+        "Quảng Bình https://quangbinhtourism.gov.vn/: Không thể kiểm tra robots.txt: https://quangbinhtourism.gov.vn",
+        "Quảng Trị https://quangtritourism.com.vn/: Không thể kiểm tra robots.txt: https://quangtritourism.com.vn",
+        "Bình Định https://sodulich.binhdinh.gov.vn/: Không thể kiểm tra robots.txt: https://sodulich.binhdinh.gov.vn",
+        "Phú Yên https://phuyentourism.gov.vn/: Không thể kiểm tra robots.txt: https://phuyentourism.gov.vn",
+        "Khánh Hòa https://dulich.khanhhoa.gov.vn/: Không thể kiểm tra robots.txt: https://dulich.khanhhoa.gov.vn",
+        "An Giang https://angiang.gov.vn/vi/du-lich: Không thể kiểm tra robots.txt: https://angiang.gov.vn"
       ]
-    },
-    "VNTRIP": {
-      "source": "VNTRIP",
-      "started_at": "2026-07-17T19:27:41.290837+00:00",
-      "finished_at": "2026-07-17T19:31:19.881319+00:00",
-      "listing_pages_seen": 50,
-      "urls_discovered": 1000,
-      "existing_urls": 1000,
-      "new_records": 0,
-      "errors": []
     }
   }
 }

@@ -37,6 +37,16 @@ THEMES = {
     "Nghỉ dưỡng": ["resort", "nghỉ dưỡng", "wellness", "spa"],
     "Lễ hội - sự kiện": ["lễ hội", "festival", "sự kiện", "event"],
 }
+REVIEW_FACTORS = {
+    "Chi phí - giá cả": ["giá", "chi phí", "đắt", "rẻ", "phí", "value"],
+    "Dịch vụ": ["dịch vụ", "nhân viên", "phục vụ", "thái độ", "service"],
+    "Lưu trú": ["khách sạn", "phòng", "resort", "homestay", "lưu trú"],
+    "Ẩm thực": ["ẩm thực", "món ăn", "nhà hàng", "đồ ăn", "food"],
+    "Di chuyển": ["di chuyển", "giao thông", "đường", "taxi", "xe"],
+    "Cảnh quan": ["cảnh", "biển", "núi", "thiên nhiên", "đẹp", "bẩn"],
+    "Vệ sinh": ["vệ sinh", "sạch", "bẩn", "rác", "toilet"],
+    "Đông đúc": ["đông", "chen chúc", "xếp hàng", "quá tải"],
+}
 BOILERPLATE_MARKERS = (
     "gửi 0 bình luận", "bạn có thể quan tâm", "một số cẩm nang khác",
     "cần tìm khách sạn giá tốt", "đăng ký nhận tin", "bản quyền ©",
@@ -65,6 +75,23 @@ def normalize_url(value):
     return urlunsplit((parts.scheme.lower(), parts.netloc.lower(), parts.path.rstrip("/"), "", ""))
 
 
+def contains_normalized_term(text, term):
+    """Khớp cả từ/cụm từ, tránh coi một phần của từ là bằng chứng nhãn."""
+    normalized_term = normalize_for_match(term)
+    if not normalized_term:
+        return False
+    return bool(re.search(rf"(?<![a-z0-9]){re.escape(normalized_term)}(?![a-z0-9])", text))
+
+
+def canonical_destination(value):
+    """Chuẩn hóa tên điểm đến trong review theo từ điển dùng cho bài viết."""
+    normalized_value = normalize_for_match(value)
+    for destination, aliases in DESTINATIONS.items():
+        if normalized_value in {normalize_for_match(destination), *(normalize_for_match(alias) for alias in aliases)}:
+            return destination
+    return str(value or "").strip()
+
+
 def label_with_evidence(title, excerpt, dictionary):
     """Gán nhãn theo điểm số; tiêu đề quan trọng hơn mô tả và lưu từ khóa khớp."""
     title_text = normalize_for_match(title)
@@ -75,8 +102,8 @@ def label_with_evidence(title, excerpt, dictionary):
         score = 0
         for term in terms:
             normalized_term = normalize_for_match(term)
-            title_hits = title_text.count(normalized_term)
-            excerpt_hits = excerpt_text.count(normalized_term)
+            title_hits = len(re.findall(rf"(?<![a-z0-9]){re.escape(normalized_term)}(?![a-z0-9])", title_text))
+            excerpt_hits = len(re.findall(rf"(?<![a-z0-9]){re.escape(normalized_term)}(?![a-z0-9])", excerpt_text))
             if title_hits or excerpt_hits:
                 score += title_hits * 3 + excerpt_hits
                 hits.append(term)
@@ -125,7 +152,7 @@ def normalize_articles():
         return pd.DataFrame()
 
     articles = pd.concat(frames, ignore_index=True, sort=False)
-    for column in ["published_date", "collected_at", "title", "excerpt"]:
+    for column in ["published_date", "collected_at", "title", "excerpt", "topic_tags", "comment_count"]:
         if column not in articles:
             articles[column] = pd.NA
     articles["published_date"] = pd.to_datetime(articles["published_date"], errors="coerce")
@@ -137,6 +164,7 @@ def normalize_articles():
         pd.to_numeric(articles.get("published_month"), errors="coerce")
     )
     articles["view_count"] = pd.to_numeric(articles.get("view_count"), errors="coerce")
+    articles["comment_count"] = pd.to_numeric(articles["comment_count"], errors="coerce")
     articles["article_text_clean"] = articles["article_text"].apply(clean_text)
     articles["source_url_normalized"] = articles["source_url"].apply(normalize_url)
     articles["content_fingerprint"] = (
@@ -154,6 +182,12 @@ def normalize_articles():
     theme_labels = articles.apply(lambda row: label_with_evidence(row["title"], row["excerpt"], THEMES), axis=1)
     articles[["destination", "destination_evidence", "destination_score", "destination_status"]] = pd.DataFrame(destination_labels.tolist(), index=articles.index)
     articles[["travel_theme", "theme_evidence", "theme_score", "theme_status"]] = pd.DataFrame(theme_labels.tolist(), index=articles.index)
+    if "portal_province" in articles:
+        portal_destination = articles["portal_province"].fillna("").astype(str).str.strip()
+        portal_mask = (articles["source"] == "PROVINCIAL_PORTALS") & portal_destination.ne("")
+        articles.loc[portal_mask, "destination"] = portal_destination[portal_mask]
+        articles.loc[portal_mask, "destination_evidence"] = "portal_province"
+        articles.loc[portal_mask, "destination_status"] = "source_metadata"
     articles = apply_label_overrides(articles)
     articles["season"] = pd.cut(
         articles["published_month"], [0, 3, 6, 9, 12], labels=["Xuân", "Hè", "Thu", "Đông"]
@@ -197,6 +231,24 @@ def analyze_interest(articles):
              median_views_per_day=("views_per_day", "median"))
     )
     export_csv(theme_stats, ANALYSIS_DIR / "destination_theme_stats.csv")
+    engagement_stats = (
+        articles[articles["destination"] != "Khác"]
+        .groupby(["source", "destination"], as_index=False)
+        .agg(article_count=("article_id", "count"), total_comments=("comment_count", "sum"),
+             articles_with_comments=("comment_count", lambda values: (values.fillna(0) > 0).sum()))
+    )
+    engagement_stats["comment_participation_rate"] = (
+        engagement_stats["articles_with_comments"] / engagement_stats["article_count"]
+    ).round(3)
+    export_csv(engagement_stats, ANALYSIS_DIR / "content_engagement_stats.csv")
+    monthly_stats = (
+        vntrip.dropna(subset=["published_date"])
+        .assign(period=lambda frame: frame["published_date"].dt.to_period("M").astype(str))
+        .groupby(["destination", "period"], as_index=False)
+        .agg(article_count=("article_id", "count"), total_views=("view_count", "sum"),
+             median_views_per_day=("views_per_day", "median"))
+    )
+    export_csv(monthly_stats, ANALYSIS_DIR / "destination_monthly_interest.csv")
     print(f"Đã phân tích xu hướng từ {len(articles)} nội dung.")
 
 
@@ -232,6 +284,82 @@ def analyze_snapshots():
     trends["previous_snapshot_date"] = trends["previous_snapshot_date"].dt.date
     export_csv(trends[columns], output_file)
     print(f"Đã tạo {output_file.name} từ {len(trends)} khoảng snapshot hợp lệ.")
+
+
+def analyze_reviews():
+    """Phân tích review người dùng nếu nhóm cung cấp data/reviews.csv hợp lệ.
+
+    Crawler nội dung không thu thập review. Tách nguồn này giúp không nhầm lượt
+    xem bài viết với mức độ hài lòng của du khách.
+    """
+    review_file = DATA_DIR / "reviews.csv"
+    behavior_file = ANALYSIS_DIR / "review_behavior_stats.csv"
+    factor_file = ANALYSIS_DIR / "destination_factor_stats.csv"
+    quality_file = ANALYSIS_DIR / "review_data_quality.csv"
+    coverage_file = ANALYSIS_DIR / "analysis_coverage.csv"
+    coverage = [
+        {"analysis_component": "Xu hướng quan tâm", "status": "available",
+         "data_basis": "Lượt xem/snapshot bài viết VNTRIP", "note": "Proxy cho mức quan tâm nội dung, không phải lượng khách."},
+    ]
+    if not review_file.exists():
+        export_csv(pd.DataFrame(columns=["destination", "review_count", "average_rating", "positive_rate", "negative_rate"]), behavior_file)
+        export_csv(pd.DataFrame(columns=["destination", "factor", "mention_count", "negative_review_count", "negative_rate"]), factor_file)
+        export_csv(pd.DataFrame([{"input_rows": 0, "valid_reviews": 0, "duplicate_review_ids": 0, "invalid_rating_or_destination": 0}]), quality_file)
+        coverage.append({"analysis_component": "Hành vi đánh giá và yếu tố ảnh hưởng", "status": "missing_input",
+                         "data_basis": "data/reviews.csv", "note": "Thêm review_id, destination, rating và review_text để phân tích."})
+        export_csv(pd.DataFrame(coverage), coverage_file)
+        print("Chưa có data/reviews.csv; chỉ xuất bản phân tích xu hướng quan tâm.")
+        return
+
+    reviews = pd.read_csv(review_file)
+    required = {"review_id", "destination", "rating", "review_text"}
+    missing = required - set(reviews.columns)
+    if missing:
+        raise ValueError(f"reviews.csv thiếu cột bắt buộc: {sorted(missing)}")
+    input_rows = len(reviews)
+    duplicate_review_ids = int(reviews.duplicated("review_id", keep="last").sum())
+    reviews = reviews.drop_duplicates("review_id", keep="last").copy()
+    reviews["rating"] = pd.to_numeric(reviews["rating"], errors="coerce")
+    reviews["destination"] = reviews["destination"].fillna("").map(canonical_destination)
+    valid_mask = reviews["rating"].between(1, 5) & reviews["destination"].ne("")
+    invalid_rating_or_destination = int((~valid_mask).sum())
+    reviews = reviews[valid_mask].copy()
+    reviews["review_text"] = reviews["review_text"].fillna("")
+    reviews["is_positive"] = reviews["rating"] >= 4
+    reviews["is_negative"] = reviews["rating"] <= 2
+    behavior = reviews.groupby("destination", as_index=False).agg(
+        review_count=("review_id", "count"), average_rating=("rating", "mean"),
+        positive_rate=("is_positive", "mean"), negative_rate=("is_negative", "mean"),
+    )
+    behavior[["average_rating", "positive_rate", "negative_rate"]] = behavior[["average_rating", "positive_rate", "negative_rate"]].round(3)
+    export_csv(behavior.sort_values(["review_count", "destination"], ascending=[False, True]), behavior_file)
+
+    factor_rows = []
+    for _, review in reviews.iterrows():
+        text = normalize_for_match(review["review_text"])
+        for factor, terms in REVIEW_FACTORS.items():
+            if any(contains_normalized_term(text, term) for term in terms):
+                factor_rows.append({"destination": review["destination"], "factor": factor,
+                                    "is_negative": review["is_negative"]})
+    factor_columns = ["destination", "factor", "mention_count", "negative_review_count", "negative_rate"]
+    if factor_rows:
+        factors = pd.DataFrame(factor_rows).groupby(["destination", "factor"], as_index=False).agg(
+            mention_count=("factor", "size"), negative_review_count=("is_negative", "sum"),
+            negative_rate=("is_negative", "mean"),
+        )
+        factors["negative_rate"] = factors["negative_rate"].round(3)
+    else:
+        factors = pd.DataFrame(columns=factor_columns)
+    export_csv(factors.sort_values(["mention_count", "destination"], ascending=[False, True]), factor_file)
+    export_csv(pd.DataFrame([{
+        "input_rows": input_rows, "valid_reviews": len(reviews),
+        "duplicate_review_ids": duplicate_review_ids,
+        "invalid_rating_or_destination": invalid_rating_or_destination,
+    }]), quality_file)
+    coverage.append({"analysis_component": "Hành vi đánh giá và yếu tố ảnh hưởng", "status": "available",
+                     "data_basis": "Review, thang điểm 1–5 và nội dung review", "note": "Yếu tố được gán nhãn theo từ khóa; cần kiểm tra mẫu nhãn trước khi kết luận."})
+    export_csv(pd.DataFrame(coverage), coverage_file)
+    print(f"Đã phân tích {len(reviews)} review cho {len(behavior)} điểm đến.")
 
 
 def scale_to_100(series):
@@ -325,5 +453,6 @@ if __name__ == "__main__":
     articles = normalize_articles()
     analyze_interest(articles)
     analyze_snapshots()
+    analyze_reviews()
     build_opportunity_scores()
     write_run_metadata(articles)

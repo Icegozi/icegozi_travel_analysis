@@ -48,6 +48,12 @@ else
   echo "Bỏ qua crawl Vietnam.travel (RUN_VIETNAM_TRAVEL_CRAWLER=0)."
 fi
 
+if [ "${RUN_PORTALS_CRAWLER:-0}" = "1" ]; then
+  run_step "Crawl cổng du lịch địa phương" "$PYTHON_BIN" PROVINCIAL_PORTALS/crawl_portals.py
+else
+  echo "Bỏ qua crawl cổng du lịch địa phương (RUN_PORTALS_CRAWLER=0)."
+fi
+
 run_step "Phân tích dữ liệu" "$PYTHON_BIN" analysis_pipeline.py
 run_step "Tạo dashboard HTML" "$PYTHON_BIN" dashboard.py
 echo

@@ -32,12 +32,16 @@ jobs:
     env:
       RUN_VNTRIP_CRAWLER: "1"
       RUN_VIETNAM_TRAVEL_CRAWLER: "1"
-      VNTRIP_MAX_PAGES: "50"
+      RUN_PORTALS_CRAWLER: "1"
+      VNTRIP_MAX_PAGES: "200"
       VNTRIP_MAX_NEW_ARTICLES: "1000"
-      VIETNAM_TRAVEL_MAX_PAGES: "50"
+      VIETNAM_TRAVEL_MAX_PAGES: "200"
       VIETNAM_TRAVEL_MAX_NEW_ARTICLES: "1000"
-      VNTRIP_DELAY_SECONDS: "3"
-      VIETNAM_TRAVEL_DELAY_SECONDS: "3"
+      PORTALS_MAX_PAGES: "1000"
+      PORTALS_MAX_NEW_ARTICLES: "200"
+      VNTRIP_DELAY_SECONDS: "2"
+      VIETNAM_TRAVEL_DELAY_SECONDS: "2"
+      PORTALS_DELAY_SECONDS: "2"
       HTTP_TIMEOUT_SECONDS: "3"
       HTTP_RETRIES: "2"
       PYTHON_BIN: ""
@@ -91,9 +95,10 @@ jobs:
             full)
               if [ "$RUN_VNTRIP_CRAWLER" = "1" ]; then python VNTRIP/crawl_vntrip.py; fi
               if [ "$RUN_VIETNAM_TRAVEL_CRAWLER" = "1" ]; then python VIETNAM_TRAVEL/crawl_vietnam_travel.py; fi
+              if [ "$RUN_PORTALS_CRAWLER" = "1" ]; then python PROVINCIAL_PORTALS/crawl_portals.py; fi
               ;;
             vntrip_only)
-              if [ "$RUN_VNTRIP_CRAWLER" = "1" ]; then python VNTRIP/crawl_vntrip.py; fi
+              python VNTRIP/crawl_vntrip.py
               ;;
             dashboard_only)
               echo "Chỉ tạo lại dashboard từ dữ liệu đã có."
@@ -120,11 +125,20 @@ jobs:
           QUALITY_MAX_MANIFEST_AGE_DAYS: "4"
         run: |
           if [ "$RUN_MODE" = "full" ]; then
-            export QUALITY_REQUIRED_SOURCES="VNTRIP,VIETNAM_TRAVEL"
+            required_sources=""
+            [ "$RUN_VNTRIP_CRAWLER" = "1" ] && required_sources="VNTRIP"
+            [ "$RUN_VIETNAM_TRAVEL_CRAWLER" = "1" ] && required_sources="${required_sources:+$required_sources,}VIETNAM_TRAVEL"
+            [ "$RUN_PORTALS_CRAWLER" = "1" ] && required_sources="${required_sources:+$required_sources,}PROVINCIAL_PORTALS"
+            export QUALITY_REQUIRED_SOURCES="$required_sources"
           elif [ "$RUN_MODE" = "vntrip_only" ]; then
             export QUALITY_REQUIRED_SOURCES="VNTRIP"
           else
             export QUALITY_REQUIRED_SOURCES=""
+          fi
+          if [ "$RUN_MODE" = "vntrip_only" ]; then
+            export QUALITY_REQUIRE_OPPORTUNITY_SCORES="1"
+          elif [ "$RUN_VNTRIP_CRAWLER" != "1" ]; then
+            export QUALITY_REQUIRE_OPPORTUNITY_SCORES="0"
           fi
           python quality_gate.py
 
@@ -133,7 +147,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs data/analysis/run_metadata.json data/VNTRIP/rawdata.csv data/VNTRIP/links_vntrip.csv data/VNTRIP/crawl_manifest.json data/VIETNAM_TRAVEL/rawdata.csv data/VIETNAM_TRAVEL/links_vietnam_travel.csv data/VIETNAM_TRAVEL/crawl_manifest.json
+          git add docs data/analysis/run_metadata.json data/VNTRIP/rawdata.csv data/VNTRIP/links_vntrip.csv data/VNTRIP/crawl_manifest.json data/VIETNAM_TRAVEL/rawdata.csv data/VIETNAM_TRAVEL/links_vietnam_travel.csv data/VIETNAM_TRAVEL/crawl_manifest.json data/PROVINCIAL_PORTALS/rawdata.csv data/PROVINCIAL_PORTALS/links_portals.csv data/PROVINCIAL_PORTALS/crawl_manifest.json
           git add -f data/VNTRIP/article_snapshots.csv data/VNTRIP/monthly_article_stats.csv
           if git diff --cached --quiet; then
             echo "Không có dữ liệu mới để commit."

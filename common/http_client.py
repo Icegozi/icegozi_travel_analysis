@@ -23,7 +23,20 @@ class CrawlHttpClient:
         if origin not in self._robots:
             robots = urllib.robotparser.RobotFileParser()
             robots.set_url(f"{origin}/robots.txt")
-            robots.read()
+            try:
+                response = self.session.get(
+                    f"{origin}/robots.txt",
+                    headers={"User-Agent": self.user_agent},
+                    timeout=self.timeout_seconds,
+                )
+                if response.status_code == 404:
+                    robots.parse([])
+                else:
+                    response.raise_for_status()
+                    robots.parse(response.text.splitlines())
+            except requests.RequestException as error:
+                # Không crawl khi không xác minh được robots.txt; caller sẽ ghi lỗi vào manifest.
+                raise PermissionError(f"Không thể kiểm tra robots.txt: {origin}") from error
             self._robots[origin] = robots
         return self._robots[origin].can_fetch(self.user_agent, url)
 
