@@ -1,0 +1,3 @@
+﻿analysis_component,status,data_basis,note
+Xu hướng quan tâm,available,Lượt xem/snapshot bài viết VNTRIP,"Proxy cho mức quan tâm nội dung, không phải lượng khách."
+Hành vi đánh giá và yếu tố ảnh hưởng,missing_input,data/reviews.csv,"Thêm review_id, destination, rating và review_text để phân tích."
