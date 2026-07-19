@@ -147,8 +147,28 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs data/analysis/run_metadata.json data/VNTRIP/rawdata.csv data/VNTRIP/links_vntrip.csv data/VNTRIP/crawl_manifest.json data/VIETNAM_TRAVEL/rawdata.csv data/VIETNAM_TRAVEL/links_vietnam_travel.csv data/VIETNAM_TRAVEL/crawl_manifest.json data/PROVINCIAL_PORTALS/rawdata.csv data/PROVINCIAL_PORTALS/links_portals.csv data/PROVINCIAL_PORTALS/crawl_manifest.json
-          git add -f data/VNTRIP/article_snapshots.csv data/VNTRIP/monthly_article_stats.csv
+          git add docs
+          generated_files=(
+            data/analysis/run_metadata.json
+            data/VNTRIP/rawdata.csv
+            data/VNTRIP/links_vntrip.csv
+            data/VNTRIP/crawl_manifest.json
+            data/VNTRIP/article_snapshots.csv
+            data/VNTRIP/monthly_article_stats.csv
+            data/VIETNAM_TRAVEL/rawdata.csv
+            data/VIETNAM_TRAVEL/links_vietnam_travel.csv
+            data/VIETNAM_TRAVEL/crawl_manifest.json
+            data/PROVINCIAL_PORTALS/rawdata.csv
+            data/PROVINCIAL_PORTALS/links_portals.csv
+            data/PROVINCIAL_PORTALS/crawl_manifest.json
+          )
+          for file in "${generated_files[@]}"; do
+            if [ -f "$file" ]; then
+              git add -f -- "$file"
+            else
+              echo "Không stage $file: tệp không được tạo ở lượt chạy này."
+            fi
+          done
           if git diff --cached --quiet; then
             echo "Không có dữ liệu mới để commit."
           else
