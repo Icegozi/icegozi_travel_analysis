@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0",
-  "generated_at": "2026-07-19T11:54:23.857220+00:00",
-  "normalized_article_count": 1048,
+  "generated_at": "2026-07-19T17:20:34.493811+00:00",
+  "normalized_article_count": 2048,
   "sources": {
     "VIETNAM_TRAVEL": {
       "source": "VIETNAM_TRAVEL",
@@ -21,28 +21,13 @@
     },
     "VNTRIP": {
       "source": "VNTRIP",
-      "started_at": "2026-07-19T07:52:43.947473+00:00",
-      "finished_at": "2026-07-19T08:44:39.489048+00:00",
-      "listing_pages_seen": 46,
-      "urls_discovered": 920,
-      "existing_urls": 0,
-      "new_records": 907,
-      "errors": [
-        "Nội dung https://www.vntrip.vn/cam-nang/dia-diem-di-choi-valentine-o-ha-noi-2020-lang-man-nhat-95150: HTTPSConnectionPool(host='www.vntrip.vn', port=443): Read timed out. (read timeout=3)",
-        "Nội dung https://www.vntrip.vn/cam-nang/homestay-sapa-cho-nhom-95080: HTTPSConnectionPool(host='www.vntrip.vn', port=443): Read timed out. (read timeout=3)",
-        "Nội dung https://www.vntrip.vn/cam-nang/mua-hoa-mimosa-da-lat-95133: HTTPSConnectionPool(host='www.vntrip.vn', port=443): Read timed out. (read timeout=3)",
-        "Nội dung https://www.vntrip.vn/cam-nang/kinh-nghiem-du-lich-tet-2021-tron-ven-tu-a-den-z-95103: HTTPSConnectionPool(host='www.vntrip.vn', port=443): Read timed out. (read timeout=3)",
-        "Nội dung https://www.vntrip.vn/cam-nang/khach-san-tinh-yeu-nha-trang-95070: HTTPSConnectionPool(host='www.vntrip.vn', port=443): Read timed out. (read timeout=3)",
-        "Nội dung https://www.vntrip.vn/cam-nang/khach-san-co-ghe-tinh-yeu-phu-nhuan-95019: HTTPSConnectionPool(host='www.vntrip.vn', port=443): Read timed out. (read timeout=3)",
-        "Nội dung https://www.vntrip.vn/cam-nang/di-da-lat-ve-chia-tay-94995: HTTPSConnectionPool(host='www.vntrip.vn', port=443): Read timed out. (read timeout=3)",
-        "Nội dung https://www.vntrip.vn/cam-nang/khach-san-co-ghe-tinh-yeu-binh-thanh-94956: HTTPSConnectionPool(host='www.vntrip.vn', port=443): Read timed out. (read timeout=3)",
-        "Nội dung https://www.vntrip.vn/cam-nang/khach-san-co-ghe-tinh-yeu-da-lat-94896: HTTPSConnectionPool(host='www.vntrip.vn', port=443): Read timed out. (read timeout=3)",
-        "Nội dung https://www.vntrip.vn/cam-nang/chua-o-ha-noi-linh-thieng-94899: HTTPSConnectionPool(host='www.vntrip.vn', port=443): Read timed out. (read timeout=3)",
-        "Nội dung https://www.vntrip.vn/cam-nang/gia-khach-san-da-lat-dip-tet-2020-94700: HTTPSConnectionPool(host='www.vntrip.vn', port=443): Read timed out. (read timeout=3)",
-        "Nội dung https://www.vntrip.vn/cam-nang/khach-san-tinh-yeu-ha-noi-co-ghe-tantra-94937: HTTPSConnectionPool(host='www.vntrip.vn', port=443): Read timed out. (read timeout=3)",
-        "Nội dung https://www.vntrip.vn/cam-nang/khach-san-co-ghe-tinh-yeu-quan-10-hcm-94836: HTTPSConnectionPool(host='www.vntrip.vn', port=443): Read timed out. (read timeout=3)",
-        "Danh mục https://www.vntrip.vn/cam-nang/du-lich/page/47: HTTPSConnectionPool(host='www.vntrip.vn', port=443): Read timed out. (read timeout=3)"
-      ]
+      "started_at": "2026-07-19T16:24:01.418704+00:00",
+      "finished_at": "2026-07-19T17:20:29.268645+00:00",
+      "listing_pages_seen": 96,
+      "urls_discovered": 1920,
+      "existing_urls": 907,
+      "new_records": 1000,
+      "errors": []
     }
   }
 }

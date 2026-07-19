@@ -1,15 +1,16 @@
 ﻿destination,article_count,total_views,median_views_per_day,interest_score,latest_views_growth,opportunity_score,score_basis,recommendation
-Sa Pa,38,143982.0,2.12,86.23,1.5,86.23,Dữ liệu nội dung trực tuyến,"Ưu tiên nội dung, chiến dịch và sản phẩm theo mùa."
-Hà Nội,66,231704.0,1.83,85.32,153.0,85.32,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
-TP. Hồ Chí Minh,44,228410.0,1.74,69.42,0.5,69.42,Dữ liệu nội dung trực tuyến,"Ưu tiên nội dung, chiến dịch và sản phẩm theo mùa."
-Hạ Long,10,37700.0,1.92,62.45,52.5,62.45,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
-Đà Lạt,65,222675.0,1.29,52.7,203.5,52.7,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
-Huế,22,85451.0,1.58,49.74,0.0,49.74,Dữ liệu nội dung trực tuyến,Theo dõi theo mùa và mở rộng nhóm bài viết liên quan.
-Cần Thơ,5,18200.0,1.67,46.29,0.0,46.29,Dữ liệu nội dung trực tuyến,Theo dõi theo mùa và mở rộng nhóm bài viết liên quan.
-Ninh Bình,7,31800.0,1.6,43.44,50.0,43.44,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
-Nha Trang,18,62000.0,1.46,40.41,0.0,40.41,Dữ liệu nội dung trực tuyến,Theo dõi theo mùa và mở rộng nhóm bài viết liên quan.
-Phú Quốc,32,86471.0,1.32,38.38,1.5,38.38,Dữ liệu nội dung trực tuyến,Theo dõi theo mùa và mở rộng nhóm bài viết liên quan.
-Mũi Né,5,14600.0,1.51,36.94,0.0,36.94,Dữ liệu nội dung trực tuyến,Theo dõi theo mùa và mở rộng nhóm bài viết liên quan.
-Đà Nẵng,38,108074.0,1.25,36.64,3.5,36.64,Dữ liệu nội dung trực tuyến,Theo dõi theo mùa và mở rộng nhóm bài viết liên quan.
-Hội An,14,32135.0,1.05,10.59,0.0,10.59,Dữ liệu nội dung trực tuyến,Tăng số bài và theo dõi thêm trước khi ưu tiên đầu tư.
-Hà Giang,17,43202.0,0.97,5.9,1.5,5.9,Dữ liệu nội dung trực tuyến,Tăng số bài và theo dõi thêm trước khi ưu tiên đầu tư.
+Phong Nha,1,12900.0,6.22,70.0,0.0,70.0,Dữ liệu nội dung trực tuyến,"Ưu tiên nội dung, chiến dịch và sản phẩm theo mùa."
+TP. Hồ Chí Minh,117,1353114.0,3.47,69.0,52.5,69.0,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
+Hà Nội,130,1053410.0,2.61,59.49,156.0,59.49,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
+Đà Lạt,126,848987.0,2.18,51.17,259.5,51.17,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
+Phú Quốc,94,713874.0,2.44,48.36,3.0,48.36,Dữ liệu nội dung trực tuyến,Theo dõi theo mùa và mở rộng nhóm bài viết liên quan.
+Sa Pa,67,490385.0,2.26,38.9,53.0,38.9,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
+Nha Trang,55,399100.0,2.41,38.82,50.0,38.82,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
+Đà Nẵng,105,751579.0,1.75,37.75,6.0,37.75,Dữ liệu nội dung trực tuyến,Theo dõi theo mùa và mở rộng nhóm bài viết liên quan.
+Mũi Né,10,73500.0,2.78,34.24,0.0,34.24,Dữ liệu nội dung trực tuyến,Tăng số bài và theo dõi thêm trước khi ưu tiên đầu tư.
+Hội An,39,279036.0,2.3,33.04,0.5,33.04,Dữ liệu nội dung trực tuyến,Tăng số bài và theo dõi thêm trước khi ưu tiên đầu tư.
+Hạ Long,16,144103.0,2.52,31.6,54.0,31.6,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
+Huế,38,218254.0,2.19,30.92,51.5,30.92,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
+Ninh Bình,11,143900.0,2.47,29.59,50.0,29.59,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
+Cần Thơ,8,52400.0,1.85,17.39,0.0,17.39,Dữ liệu nội dung trực tuyến,Tăng số bài và theo dõi thêm trước khi ưu tiên đầu tư.
+Hà Giang,20,75607.0,1.18,4.42,4.0,4.42,Dữ liệu nội dung trực tuyến,Tăng số bài và theo dõi thêm trước khi ưu tiên đầu tư.
