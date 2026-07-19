@@ -35,7 +35,7 @@ HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; TourismResearchBot/1.0)"}
 
 RAW_COLUMNS = [
     "article_id", "title", "published_date", "published_year", "published_month",
-    "view_count", "excerpt", "article_text", "source_url", "image_url", "collected_at",
+    "view_count", "comment_count", "topic_tags", "excerpt", "article_text", "source_url", "image_url", "collected_at",
 ]
 
 
@@ -56,6 +56,22 @@ def parse_view_count(text):
         multiplier = 1_000 if suffix.lower() == "k" else 1_000_000
         return round(float(number.replace(",", ".")) * multiplier)
     return int(re.sub(r"[.,]", "", number))
+
+
+def parse_comment_count(text):
+    """Lấy số bình luận hiển thị; đây là tương tác nội dung, không phải rating."""
+    match = re.search(r"(\d+)\s+bình luận", text or "", re.I)
+    return int(match.group(1)) if match else ""
+
+
+def extract_topic_tags(soup):
+    """Ưu tiên metadata/tag công khai để phân tích chủ đề thay vì suy đoán từ thân bài."""
+    tags = []
+    keywords = soup.select_one('meta[name="keywords"]')
+    if keywords and keywords.get("content"):
+        tags.extend(item.strip() for item in keywords["content"].split(","))
+    tags.extend(anchor.get_text(" ", strip=True) for anchor in soup.select('a[rel="tag"], .tags a, .post-tags a'))
+    return " | ".join(dict.fromkeys(tag for tag in tags if tag))
 
 
 def get_article_cards(soup):
@@ -104,6 +120,8 @@ def parse_article(soup, card):
         "published_year": card["published_year"] or year,
         "published_month": card["published_month"] or month,
         "view_count": card["view_count"] or parse_view_count(text),
+        "comment_count": parse_comment_count(text),
+        "topic_tags": extract_topic_tags(soup),
         "excerpt": description.get("content", "").strip() if description else "",
         "article_text": text,
         "source_url": card["source_url"],
@@ -122,6 +140,7 @@ def load_existing_records():
 def save_outputs(records, links):
     frame = pd.DataFrame(records.values(), columns=RAW_COLUMNS)
     frame["view_count"] = pd.to_numeric(frame["view_count"], errors="coerce")
+    frame["comment_count"] = pd.to_numeric(frame["comment_count"], errors="coerce")
     frame["published_year"] = pd.to_numeric(frame["published_year"], errors="coerce")
     frame["published_month"] = pd.to_numeric(frame["published_month"], errors="coerce")
     export_csv(frame, RAW_FILE)
@@ -143,7 +162,7 @@ def save_monthly_stats(frame):
         frame.dropna(subset=["published_year", "published_month"])
         .groupby(["published_year", "published_month"], as_index=False)
         .agg(article_count=("article_id", "count"), total_view_count=("view_count", "sum"),
-             average_view_count=("view_count", "mean"))
+             average_view_count=("view_count", "mean"), total_comment_count=("comment_count", "sum"))
     )
     export_csv(statistics, MONTHLY_STATS_FILE)
 

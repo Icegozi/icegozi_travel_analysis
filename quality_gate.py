@@ -61,6 +61,7 @@ def main():
     min_total = int(os.getenv("QUALITY_MIN_TOTAL_ARTICLES", "20"))
     min_per_source = int(os.getenv("QUALITY_MIN_SOURCE_ARTICLES", "5"))
     max_review_rate = float(os.getenv("QUALITY_MAX_LABEL_REVIEW_RATE", "0.90"))
+    require_opportunity_scores = os.getenv("QUALITY_REQUIRE_OPPORTUNITY_SCORES", "1") == "1"
     required_sources = [item.strip() for item in os.getenv("QUALITY_REQUIRED_SOURCES", "").split(",") if item.strip()]
     require_fresh_manifest = os.getenv("QUALITY_REQUIRE_FRESH_MANIFEST", "0") == "1"
     max_manifest_age_days = float(os.getenv("QUALITY_MAX_MANIFEST_AGE_DAYS", "4"))
@@ -91,7 +92,10 @@ def main():
 
     scores = read_csv("destination_opportunity_scores.csv")
     if scores is None or scores.empty:
-        errors.append("Không có điểm cơ hội để hiển thị trên dashboard.")
+        if require_opportunity_scores:
+            errors.append("Không có điểm cơ hội để hiển thị trên dashboard.")
+        else:
+            report.append("- Điểm cơ hội: **không áp dụng** (không có dữ liệu lượt xem VNTRIP)")
     else:
         report.append(f"- Điểm đến được chấm điểm: **{len(scores)}**")
 
