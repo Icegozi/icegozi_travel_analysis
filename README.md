@@ -1,173 +1,147 @@
-# PHÂN TÍCH DỮ LIỆU DU LỊCH VIỆT NAM TỪ HTML CÔNG KHAI
+# Vietnam Tourism Interest Analysis
 
-## Mục tiêu
+Reproducible research pipeline for studying **online interest in Vietnamese destinations** from publicly available tourism content. It collects permitted pages, identifies destinations and travel themes, tracks content engagement, and publishes a static dashboard.
 
-Thu thập và phân tích nội dung HTML công khai từ VNTRIP và Vietnam.travel để nhận
-diện điểm đến, chủ đề, mùa vụ và mức độ quan tâm trực tuyến. Crawler VNTRIP cũng
-lưu lượt bình luận và tags công khai để đo tương tác với nội dung. Lượt xem bài viết là
-chỉ số quan tâm nội dung, không thay thế thống kê lượng khách du lịch thực tế hay
-đánh giá của du khách.
+> **Scope.** Article views and comments are proxies for content interest and engagement. They are not visitor-arrival statistics, traveller ratings, satisfaction scores, or evidence of causality.
 
-Crawler chỉ lấy trang công khai khi `robots.txt` cho phép, không đăng nhập, không
-vượt CAPTCHA và không thu thập dữ liệu cá nhân.
+## What this project answers
 
-## Mục đích thực tiễn
+- Which destinations and themes receive the most observable content attention?
+- How does attention vary by publication season and across repeated VNTRIP snapshots?
+- Which content-level signals may help prioritize destination marketing research?
+- When permitted review data is supplied, which service factors are mentioned alongside ratings?
 
-Sản phẩm là công cụ theo dõi **nhu cầu nội dung du lịch trực tuyến**, giúp đội ngũ
-marketing và kinh doanh chọn điểm đến, chủ đề và thời điểm ưu tiên. Sản phẩm không
-dự báo trực tiếp số khách du lịch hoặc doanh thu.
-
-Để trả lời đầy đủ đề tài *“Phân tích dữ liệu du lịch nhằm nhận diện xu hướng quan
-tâm, hành vi đánh giá và các yếu tố ảnh hưởng đến điểm đến”*, bổ sung tệp
-`data/reviews.csv` từ một nguồn được phép sử dụng. Tệp phải có tối thiểu
-`review_id,destination,rating,review_text`; xem `data/reviews.example.csv`. Pipeline
-sẽ tạo thống kê hành vi đánh giá và các yếu tố được nhắc đến. Không có tệp này,
-dashboard chỉ công bố kết quả về xu hướng quan tâm và ghi rõ giới hạn dữ liệu.
-Chuẩn hóa tên `destination` trong review theo các tên hiển thị trên dashboard, ví dụ
-`Đà Nẵng`, `Đà Lạt`, `Phú Quốc`.
-
-Không dùng bình luận dưới bài viết như review du lịch: đây chỉ là chỉ số tương tác
-nội dung. Review/rating phải được nhập từ nguồn có quyền sử dụng vào `reviews.csv`.
-
-| Người dùng | Câu hỏi cần trả lời | Kết quả sử dụng |
-|---|---|---|
-| Công ty lữ hành/OTA | Nên quảng bá tour hay điểm đến nào theo mùa? | Xếp hạng điểm cơ hội, lượt xem/ngày và xu hướng mùa vụ. |
-| Khách sạn, resort | Khi nào nên chạy gói khuyến mãi hoặc hợp tác nội dung? | Theo dõi điểm đến có mức quan tâm và tốc độ tăng lượt xem cao. |
-| Đội content/SEO | Nên viết chủ đề nào tiếp theo? | Nhận diện địa danh/chủ đề đang được quan tâm và nội dung cần mở rộng. |
-| Cơ quan xúc tiến du lịch | Điểm đến nào cần ưu tiên truyền thông? | So sánh mức độ hiện diện và quan tâm trực tuyến giữa các điểm đến. |
-
-Ví dụ: một điểm đến có lượt xem/ngày và số bài viết cao là tín hiệu để ưu tiên landing
-page, bài SEO, quảng cáo hoặc gói sản phẩm theo mùa. Ngược lại, điểm đến có ít dữ
-liệu cần được bổ sung nội dung và theo dõi thêm trước khi đầu tư ngân sách.
-
-## Cấu trúc
+## Architecture
 
 ```text
-VNTRIP/crawl_vntrip.py                  # Crawl bài viết và snapshot lượt xem
-VIETNAM_TRAVEL/crawl_vietnam_travel.py  # Crawl bài viết/điểm đến
-PROVINCIAL_PORTALS/crawl_portals.py      # Crawl có giới hạn 20 cổng du lịch địa phương
-analysis_pipeline.py                    # Làm sạch, gán nhãn, khử trùng, phân tích
-dashboard.py                            # Sinh dashboard HTML tĩnh
-run_all.sh                              # Crawl và phân tích toàn bộ
-run_snapshot.sh                         # Cập nhật snapshot VNTRIP
-
-data/
-├── VNTRIP/rawdata.csv
-├── VIETNAM_TRAVEL/rawdata.csv
-└── analysis/                           # Các CSV kết quả tạo lại được
-
-docs/index.html                         # Dashboard cho GitHub Pages
+public tourism pages
+        │
+        ├── VNTRIP/crawl_vntrip.py
+        ├── VIETNAM_TRAVEL/crawl_vietnam_travel.py
+        └── PROVINCIAL_PORTALS/crawl_portals.py
+        │
+        ▼
+data/<SOURCE>/rawdata.csv ──► analysis_pipeline.py ──► data/analysis/*.csv
+                                                        │
+                                                        ▼
+                                                   dashboard.py
+                                                        │
+                                                        ▼
+                                                docs/index.html
 ```
 
-## Thiết lập
+| Path | Purpose |
+| --- | --- |
+| `common/` | Shared HTTP, configuration, CSV, and crawl-manifest utilities. |
+| `VNTRIP/`, `VIETNAM_TRAVEL/`, `PROVINCIAL_PORTALS/` | Source-specific crawlers. |
+| `analysis_pipeline.py` | Cleaning, deduplication, labelling, trend, review, and coverage analysis. |
+| `dashboard.py`, `dashboard_assets/` | Static dashboard generator and assets. |
+| `quality_gate.py` | Publish checks used by GitHub Actions. |
+| `tests/` | Offline regression tests; no network access is required. |
+| `data/` | Runtime data. Raw and analytical CSV files are generated locally. |
+| `docs/` | Generated GitHub Pages output. |
+
+## Quick start
+
+### From a source archive
 
 ```bash
+mkdir parseHtml
+unzip icegozi_travel_analysis_source_YYYY-MM-DD.zip -d parseHtml
+cd parseHtml
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 cp .env.example .env
-```
-
-Để chỉ phân tích dữ liệu HTML đã có, đặt trong `.env`:
-
-```text
-RUN_VNTRIP_CRAWLER=0
-RUN_VIETNAM_TRAVEL_CRAWLER=0
-RUN_PORTALS_CRAWLER=0
-```
-
-`PORTALS_MAX_PAGES` là tổng số trang danh mục tối đa của cả crawler, giống quy ước
-`VNTRIP_MAX_PAGES` và `VIETNAM_TRAVEL_MAX_PAGES`. `PORTALS_MAX_NEW_ARTICLES` là
-tổng số bài mới của cả 20 cổng trong một lần chạy.
-
-Chạy toàn bộ luồng:
-
-```bash
 sh run_all.sh
 ```
 
-## Kết quả phân tích
-
-- `normalized_articles.csv`: nội dung HTML đã làm sạch, gán điểm đến/chủ đề.
-- `duplicate_articles.csv`: bản ghi trùng URL hoặc nội dung bị loại.
-- `label_review.csv`: nhãn tự động, từ khóa bằng chứng và trạng thái kiểm tra.
-- `destination_season_stats.csv`: lượt xem/ngày theo điểm đến và mùa.
-- `article_snapshot_trends.csv`: tốc độ tăng lượt xem giữa các lần crawl.
-- `destination_opportunity_scores.csv`: điểm cơ hội từ 70% lượt xem/ngày và 30% số bài.
-- `review_behavior_stats.csv`: số review, điểm trung bình, tỷ lệ tích cực/tiêu cực.
-- `destination_factor_stats.csv`: yếu tố được nhắc đến trong review (giá, dịch vụ,
-  lưu trú, ẩm thực, di chuyển, cảnh quan, vệ sinh, đông đúc).
-- `destination_monthly_interest.csv`: xu hướng lượt xem/ngày theo tháng xuất bản.
-- `content_engagement_stats.csv`: số bình luận và tỷ lệ bài có bình luận công khai.
-- `review_data_quality.csv`: số review hợp lệ, trùng và bị loại trước khi phân tích.
-- `analysis_coverage.csv`: phạm vi chỉ số có thể kết luận từ dữ liệu hiện có.
-
-Không gộp `interest_score` với điểm đánh giá thành một điểm tổng hợp khi chưa có
-review đủ đại diện. Đây là hai tín hiệu khác nhau; các bảng chỉ dùng để nhận diện
-liên hệ quan sát, không khẳng định nguyên nhân-kết quả.
-
-Để hiệu chỉnh nhãn thủ công, điền `validated_destination` hoặc
-`validated_travel_theme` trong `data/analysis/label_overrides.csv`, sau đó chạy lại
-pipeline.
-
-## Cập nhật dữ liệu không trùng lặp
-
-Hai crawler nhận diện bài đã parse bằng `source_url`. Mỗi lần chạy, `rawdata.csv`
-được ghi lại từ tập dữ liệu đã hợp nhất, nên không sinh dòng URL trùng. VNTRIP cập
-nhật metadata bài có sẵn; Vietnam.travel giữ bài cũ và chỉ tải trang chi tiết của URL
-mới. `VNTRIP_MAX_NEW_ARTICLES` và `VIETNAM_TRAVEL_MAX_NEW_ARTICLES` là số bài
-**mới** tối đa trong mỗi lần chạy. Tên cũ `*_MAX_ARTICLES` vẫn được đọc để không
-làm hỏng cấu hình cũ, nhưng không nên dùng trong cấu hình mới.
-
-Mỗi crawler cũng tạo `crawl_manifest.json`, ghi số trang đã đọc, URL phát hiện,
-bài mới/bài cũ và lỗi. Pipeline tổng hợp các báo cáo đó vào
-`data/analysis/run_metadata.json`; đây là cơ sở để quality gate phát hiện dữ liệu
-quá cũ hoặc một nguồn crawl không thực sự hoàn tất.
-
-## Dashboard HTML
-
-Chạy:
+### From a Git clone
 
 ```bash
-.venv/bin/python dashboard.py
+git clone https://github.com/Icegozi/icegozi_travel_analysis.git
+cd icegozi_travel_analysis
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+cp .env.example .env
+sh run_all.sh
 ```
 
-Trang kết quả được tạo tại `docs/index.html`. Bật GitHub Pages với nhánh `main` và
-thư mục `/docs` để xem online tại:
+Use Python 3.12 or a compatible Python 3 release. The first run requires Internet access; it creates `data/` files and regenerates `docs/index.html`.
 
-`https://icegozi.github.io/icegozi_travel_analysis/`
+## Configuration
 
-Dashboard gồm danh sách việc cần làm ngay, biểu đồ điểm cơ hội, biểu đồ tăng trưởng
-từ snapshot, heatmap mùa vụ và bộ lọc điểm đến. Toàn bộ giao diện dùng HTML, CSS và
-JavaScript thuần; không cần server hoặc thư viện frontend.
+Copy `.env.example` to `.env`. Do not commit `.env`.
 
-Mục **Tải dữ liệu CSV** trên dashboard cho phép tải raw data, danh sách URL, snapshot
-và các bảng kết quả phân tích. Các tệp được tạo trong `docs/data/` khi chạy
-`dashboard.py`, vì vậy cần commit cả thư mục này khi xuất bản qua GitHub Pages.
+| Variable group | Default | Meaning |
+| --- | ---: | --- |
+| `RUN_*_CRAWLER` | `1` | Enables VNTRIP, Vietnam.travel, or provincial-portal crawling. |
+| `*_MAX_PAGES` | `200`, `200`, `1000` | Listing-page budget for VNTRIP, Vietnam.travel, and all portals respectively. |
+| `*_MAX_NEW_ARTICLES` | `1000`, `1000`, `200` | New-article budget per run. |
+| `*_DELAY_SECONDS` | `2` | Delay between requests for each source. |
+| `HTTP_TIMEOUT_SECONDS` / `HTTP_RETRIES` | `3` / `2` | Request timeout and retry count. |
+| `PYTHON_BIN` | empty | Optional Python executable; defaults to `.venv/bin/python`. |
 
-## Snapshot định kỳ
+For a fast local check, lower page/article budgets in `.env`. `PORTALS_MAX_PAGES` and `PORTALS_MAX_NEW_ARTICLES` are global budgets shared by all provincial portals, not per-portal limits.
 
-Chạy `./run_snapshot.sh` để cập nhật lượt xem của bài VNTRIP. Mẫu lịch cron nằm ở
-`cron/snapshot.cron.example`; với GitHub-only, dùng GitHub Actions theo lịch thay
-cho cron máy chủ.
+## Running the pipeline
 
-## Tự động chạy trên GitHub
+```bash
+# Crawl enabled sources, analyse, and rebuild the dashboard
+sh run_all.sh
 
-Workflow `.github/workflows/update-dashboard.yml` kiểm tra lúc **02:00 giờ Việt
-Nam/ICT (UTC+7)** mỗi ngày, nhưng chỉ crawl đúng **3 ngày một lần**. Workflow crawl
-dữ liệu công khai, phân tích, sinh lại `docs/index.html` và tự commit dữ liệu/dashboard
-mới để GitHub Pages cập nhật. Chạy thủ công từ tab Actions luôn thực hiện ngay, không
-chờ chu kỳ.
+# Rebuild analysis and dashboard from data already collected
+# Set all RUN_*_CRAWLER values to 0 in .env, then run:
+sh run_all.sh
 
-Sau khi push workflow lần đầu, vào **Settings → Actions → General → Workflow
-permissions** và chọn **Read and write permissions**. Có thể chạy thử ngay tại tab
-**Actions**, chọn workflow “Cập nhật dữ liệu và dashboard du lịch”, sau đó bấm
-**Run workflow**.
+# Run offline regression tests
+.venv/bin/python -m unittest tests/test_refactor.py
 
-Khi chạy thủ công, chọn một trong ba chế độ: `full` (crawl cả hai nguồn),
-`vntrip_only` (chỉ crawl VNTRIP) hoặc `dashboard_only` (phân tích và tạo lại
-dashboard từ dữ liệu hiện có). Trước khi commit/publish, `quality_gate.py` kiểm tra
-số bài tối thiểu, số bài theo nguồn, tỷ lệ nhãn cần rà soát, bảng điểm cơ hội, HTML
-dashboard và manifest mới của từng nguồn. Nếu không đạt ngưỡng, workflow thất bại
-và không publish dữ liệu mới.
+# Validate generated data before publishing
+.venv/bin/python quality_gate.py
+```
 
-Copyright (c) 2026 Icegozi.
+Open `docs/index.html` locally after a successful run. The dashboard's CSV download links are generated into `docs/data/`.
+
+## Data contract and outputs
+
+The crawlers preserve each source URL to avoid duplicate records. Do not manually edit `rawdata.csv`; rerun the relevant crawler instead. See [`data/README.md`](data/README.md) for the review-data schema.
+
+Important outputs in `data/analysis/` include:
+
+- `normalized_articles.csv` — cleaned content with destination and theme labels.
+- `destination_opportunity_scores.csv` — content-interest prioritisation score (70% views/day, 30% article count).
+- `destination_season_stats.csv` and `destination_monthly_interest.csv` — seasonal and monthly interest signals.
+- `article_snapshot_trends.csv` — VNTRIP view changes between crawl dates.
+- `content_engagement_stats.csv` — public comment activity; not traveller reviews.
+- `review_behavior_stats.csv` and `destination_factor_stats.csv` — produced only when valid review data is supplied.
+- `analysis_coverage.csv` and `run_metadata.json` — limits, provenance, and crawl coverage.
+
+To analyse authorised review data, create `data/reviews.csv` with these required columns:
+
+```text
+review_id,destination,rating,review_text
+```
+
+Optional fields are `review_date`, `platform`, `source_url`, and `collected_at`. Ratings must be 1–5. Use canonical destination names such as `Đà Nẵng`, `Đà Lạt`, and `Phú Quốc`.
+
+## Responsible collection and interpretation
+
+- Crawl only public pages allowed by the site's `robots.txt`.
+- Do not bypass authentication, CAPTCHAs, rate limits, or technical protections.
+- Do not collect or publish personal data.
+- Keep request budgets modest and retain source URLs/manifests for provenance.
+- Treat labels and scores as exploratory signals. Validate destination labels and use representative, authorised review data before making claims about traveller sentiment.
+
+## Automation and publishing
+
+`.github/workflows/update-dashboard.yml` runs on GitHub Actions at 02:00 ICT (checked daily; crawling occurs every three days) and can be run manually in `full`, `vntrip_only`, or `dashboard_only` mode. It runs the quality gate before committing generated data and `docs/` for GitHub Pages.
+
+Enable **Settings → Actions → General → Workflow permissions → Read and write permissions** for the workflow to push updates.
+
+## Development
+
+Keep new source-specific parsing code inside the appropriate crawler, place reusable logic in `common/`, and add an offline test for parsing or normalization changes. Format code with four-space indentation and use descriptive `snake_case` names. Generated data, virtual environments, caches, and local configuration are excluded by `.gitignore`.
+
+## License
+
+See [LICENSE](LICENSE).
