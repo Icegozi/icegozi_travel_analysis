@@ -1,0 +1,16 @@
+{
+  "source": "VIETNAM_TRAVEL",
+  "started_at": "2026-07-19T08:44:39.983957+00:00",
+  "finished_at": "2026-07-19T09:11:58.278788+00:00",
+  "listing_pages_seen": 400,
+  "urls_discovered": 20200,
+  "existing_urls": 0,
+  "new_records": 62,
+  "errors": [
+    "Nội dung https://vietnam.travel/places-to-go/central-vietnam/da-lat: 404 Client Error: Not Found for url: https://vietnam.travel/places-to-go/central-vietnam/da-lat",
+    "Nội dung https://vietnam.travel/places-to-go/southern-vietnam/mui-ne: 404 Client Error: Not Found for url: https://vietnam.travel/places-to-go/southern-vietnam/mui-ne",
+    "Nội dung https://vietnam.travel/places-to-go/southern-vietnam/ho-chi-minh: 404 Client Error: Not Found for url: https://vietnam.travel/places-to-go/southern-vietnam/ho-chi-minh",
+    "Nội dung https://vietnam.travel/places-to-go/southern-vietnam/vung-tau: 404 Client Error: Not Found for url: https://vietnam.travel/places-to-go/southern-vietnam/vung-tau",
+    "Nội dung https://vietnam.travel/places-to-go/southern-vietnam/mekong-delta: 404 Client Error: Not Found for url: https://vietnam.travel/places-to-go/southern-vietnam/mekong-delta"
+  ]
+}

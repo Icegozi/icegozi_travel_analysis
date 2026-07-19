@@ -1,13 +1,31 @@
-# Quy ước dữ liệu
+# Runtime data
 
-`VNTRIP/rawdata.csv` và `VIETNAM_TRAVEL/rawdata.csv` là dữ liệu gốc đã thu thập.
-Không chỉnh sửa thủ công, đổi tên hoặc ghi đè các tệp này khi phân tích. Pipeline chỉ
-đọc dữ liệu gốc và ghi kết quả có thể tái tạo vào `data/analysis/`.
+This directory is populated by the crawlers and analysis pipeline. It is intentionally
+empty in a fresh source distribution.
 
-Để phân tích hành vi đánh giá, tạo `data/reviews.csv` từ nguồn được phép sử dụng.
-Tệp cần có: `review_id`, `destination`, `rating` (1–5), `review_text`. Có thể thêm
-`review_date`, `platform`, `source_url`, `collected_at`. Dùng
-`reviews.example.csv` làm mẫu; không thay thế dữ liệu thật bằng tệp mẫu.
+## Generated inputs
 
-Trước khi chạy `analysis_pipeline.py`, sao lưu hoặc commit dữ liệu đầu vào. Các tệp
-kết quả trong `analysis/` và `docs/data/` được tạo lại mỗi lần chạy.
+- `VNTRIP/rawdata.csv`
+- `VIETNAM_TRAVEL/rawdata.csv`
+- `PROVINCIAL_PORTALS/rawdata.csv`
+
+These files are crawler-managed. Do not rename, edit, or merge them manually; each
+crawler deduplicates by `source_url` and writes a crawl manifest for provenance.
+
+## Optional review input
+
+To enable rating and factor analysis, create `reviews.csv` using UTF-8 CSV with the
+following required columns:
+
+```text
+review_id,destination,rating,review_text
+```
+
+`rating` must be numeric from 1 to 5. Optional columns are `review_date`, `platform`,
+`source_url`, and `collected_at`. Use only data that you are authorised to collect and
+process. Do not include personal data beyond what is necessary for the research.
+
+## Analysis output
+
+`analysis/` is recreated by `analysis_pipeline.py`; `docs/data/` is recreated by
+`dashboard.py`. Commit generated output only when publishing a reviewed dashboard.
