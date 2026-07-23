@@ -1,10 +1,12 @@
 {
   "source": "VNTRIP",
-  "started_at": "2026-07-19T16:24:01.418704+00:00",
-  "finished_at": "2026-07-19T17:20:29.268645+00:00",
-  "listing_pages_seen": 96,
-  "urls_discovered": 1920,
-  "existing_urls": 907,
+  "started_at": "2026-07-23T19:31:22.720240+00:00",
+  "finished_at": "2026-07-23T20:30:22.173198+00:00",
+  "listing_pages_seen": 146,
+  "urls_discovered": 2920,
+  "existing_urls": 1910,
   "new_records": 1000,
-  "errors": []
+  "errors": [
+    "Nội dung https://www.vntrip.vn/cam-nang/cam-nang-du-lich-ha-long-13172: Exceeded 30 redirects."
+  ]
 }

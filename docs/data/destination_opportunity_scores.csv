@@ -1,16 +1,16 @@
 ﻿destination,article_count,total_views,median_views_per_day,interest_score,latest_views_growth,opportunity_score,score_basis,recommendation
-Phong Nha,1,12900.0,6.22,70.0,0.0,70.0,Dữ liệu nội dung trực tuyến,"Ưu tiên nội dung, chiến dịch và sản phẩm theo mùa."
-TP. Hồ Chí Minh,117,1353114.0,3.47,69.0,52.5,69.0,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
-Hà Nội,130,1053410.0,2.61,59.49,156.0,59.49,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
-Đà Lạt,126,848987.0,2.18,51.17,259.5,51.17,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
-Phú Quốc,94,713874.0,2.44,48.36,3.0,48.36,Dữ liệu nội dung trực tuyến,Theo dõi theo mùa và mở rộng nhóm bài viết liên quan.
-Sa Pa,67,490385.0,2.26,38.9,53.0,38.9,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
-Nha Trang,55,399100.0,2.41,38.82,50.0,38.82,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
-Đà Nẵng,105,751579.0,1.75,37.75,6.0,37.75,Dữ liệu nội dung trực tuyến,Theo dõi theo mùa và mở rộng nhóm bài viết liên quan.
-Mũi Né,10,73500.0,2.78,34.24,0.0,34.24,Dữ liệu nội dung trực tuyến,Tăng số bài và theo dõi thêm trước khi ưu tiên đầu tư.
-Hội An,39,279036.0,2.3,33.04,0.5,33.04,Dữ liệu nội dung trực tuyến,Tăng số bài và theo dõi thêm trước khi ưu tiên đầu tư.
-Hạ Long,16,144103.0,2.52,31.6,54.0,31.6,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
-Huế,38,218254.0,2.19,30.92,51.5,30.92,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
-Ninh Bình,11,143900.0,2.47,29.59,50.0,29.59,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
-Cần Thơ,8,52400.0,1.85,17.39,0.0,17.39,Dữ liệu nội dung trực tuyến,Tăng số bài và theo dõi thêm trước khi ưu tiên đầu tư.
-Hà Giang,20,75607.0,1.18,4.42,4.0,4.42,Dữ liệu nội dung trực tuyến,Tăng số bài và theo dõi thêm trước khi ưu tiên đầu tư.
+Phong Nha,4,107500.0,11.87,70.0,25.0,70.0,Dữ liệu nội dung trực tuyến,"Ưu tiên nội dung, chiến dịch và sản phẩm theo mùa."
+TP. Hồ Chí Minh,215,3784922.0,4.65,64.22,327.0,64.22,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
+Hà Nội,233,3432530.0,3.44,56.82,355.0,56.82,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
+Ninh Bình,16,276900.0,6.0,46.83,25.0,46.83,Dữ liệu nội dung trực tuyến,Theo dõi theo mùa và mở rộng nhóm bài viết liên quan.
+Nha Trang,167,2352600.0,2.94,43.32,50.0,43.32,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
+Đà Lạt,161,1633614.0,2.64,39.31,431.75,39.31,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
+Phú Quốc,123,1242684.0,2.89,37.04,177.5,37.04,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
+Đà Nẵng,141,1385702.0,2.03,29.22,180.75,29.22,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
+Hội An,101,1217139.0,2.4,28.75,0.75,28.75,Dữ liệu nội dung trực tuyến,Tăng số bài và theo dõi thêm trước khi ưu tiên đầu tư.
+Huế,57,570568.0,2.53,24.42,53.5,24.42,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
+Sa Pa,73,649798.0,2.35,24.4,103.25,24.4,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
+Cần Thơ,22,295200.0,2.91,23.96,75.0,23.96,Dữ liệu nội dung trực tuyến,Nhu cầu đang tăng nhanh: triển khai nội dung và chiến dịch ngay.
+Hạ Long,20,188122.0,2.76,22.19,4.75,22.19,Dữ liệu nội dung trực tuyến,Tăng số bài và theo dõi thêm trước khi ưu tiên đầu tư.
+Mũi Né,11,94200.0,2.8,21.39,25.0,21.39,Dữ liệu nội dung trực tuyến,Tăng số bài và theo dõi thêm trước khi ưu tiên đầu tư.
+Hà Giang,24,153418.0,1.29,2.62,27.75,2.62,Dữ liệu nội dung trực tuyến,Tăng số bài và theo dõi thêm trước khi ưu tiên đầu tư.
